@@ -113,14 +113,35 @@ export function initializePlayerEvents(player, audioPlayer, scrobbler, ui) {
         player.updateMediaSessionPositionState();
     });
 
-    audioPlayer.addEventListener('error', (e) => {
+    audioPlayer.addEventListener('error', async (e) => {
         console.error('Audio playback error:', e);
         playPauseBtn.innerHTML = SVG_PLAY;
 
-        // Skip to next track on error to prevent queue stalling
+        // Offer persistent actions to the user — Retry or Mark Unavailable
         if (player.currentTrack) {
-            console.warn('Skipping to next track due to playback error');
-            setTimeout(() => player.playNext(), 1000); // Small delay to avoid rapid skipping
+            console.warn('Playback error for current track:', player.currentTrack.title);
+            try {
+                const { showActionNotification } = await import('./downloads.js');
+                showActionNotification(
+                    `Playback failed: ${player.currentTrack.title}`,
+                    'Retry',
+                    () => player.playTrackFromQueue(0, 0),
+                    { persistent: true }
+                );
+                showActionNotification(
+                    `Playback failed: ${player.currentTrack.title}`,
+                    'Mark Unavailable',
+                    () => {
+                        player.currentTrack.isUnavailable = true;
+                        player.playNext();
+                    },
+                    { persistent: true }
+                );
+            } catch (e) {
+                console.warn('Failed to show action notification', e);
+                // As a last resort advance to next track to avoid permanent stall
+                setTimeout(() => player.playNext(), 2500);
+            }
         }
     });
 

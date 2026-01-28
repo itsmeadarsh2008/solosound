@@ -1,0 +1,77 @@
+/* animation.css - animated blurred background based on album art */
+:root {
+  --dyn-overlay: rgba(0,0,0,0.32);
+}
+
+/* Fullscreen fixed background layer sitting behind app content */
+.dynamic-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0; /* behind everything */
+  pointer-events: none;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center center;
+  transform-origin: center center;
+  /* Darker + slightly less bright so UI components stay legible */
+  filter: blur(36px) brightness(0.46) saturate(1.02);
+  transition: opacity 450ms ease, filter 450ms ease;
+  opacity: 0;
+  will-change: transform, background-position, opacity, filter;
+}
+
+/* Overlay for subtle color/gradient tinted effect */
+.dynamic-bg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0,0,0,0.08), rgba(0,0,0,0.28));
+  mix-blend-mode: overlay;
+  pointer-events: none;
+  opacity: 1;
+  transition: opacity 450ms ease, filter 600ms ease;
+  backdrop-filter: blur(6px);
+}
+
+/* Use the dynamically set --dyn-overlay color for an additional tint */
+.dynamic-bg::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--dyn-overlay);
+  pointer-events: none;
+  transition: background 450ms ease, opacity 450ms ease;
+}
+
+/* Active state fades in and slowly animates */
+.dynamic-bg.active {
+  opacity: 1;
+  animation: bg-pan 28s linear infinite alternate, bg-zoom 18s ease-in-out infinite alternate,
+             hue-rotate 40s linear infinite;
+}
+
+@keyframes bg-pan {
+  0% { background-position: 48% 40%; }
+  100% { background-position: 52% 60%; }
+}
+
+@keyframes bg-zoom {
+  0% { transform: scale(1); }
+  100% { transform: scale(1.06); }
+}
+
+@keyframes hue-rotate {
+  0% { filter: hue-rotate(0deg); }
+  50% { filter: hue-rotate(6deg); }
+  100% { filter: hue-rotate(0deg); }
+}
+
+/* On small screens reduce blur and animation intensity for performance */
+@media (max-width: 720px) {
+  .dynamic-bg {
+    filter: blur(22px) brightness(0.7);
+  }
+  .dynamic-bg.active {
+    animation-duration: 36s, 30s, 60s;
+  }
+}

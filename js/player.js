@@ -8,7 +8,7 @@ import {
     getTrackArtistsHTML,
     createQualityBadgeHTML,
 } from './utils.js';
-import { queueManager, replayGainSettings } from './storage.js';
+import { queueManager, replayGainSettings, backgroundSettings } from './storage.js';
 
 export class Player {
     constructor(audioElement, api, quality = 'HI_RES_LOSSLESS') {
@@ -41,7 +41,47 @@ export class Player {
                 },
             },
         });
+
+        // Listen for settings changes to update the dynamic background immediately
+        window.addEventListener('album-background-toggle', (e) => {
+            try {
+                const dyn = document.getElementById('dynamic-background');
+                if (!dyn) return;
+                const enabled = !!e.detail?.enabled;
+                if (!enabled) {
+                    dyn.classList.remove('active');
+                    dyn.style.opacity = '0';
+                    dyn.style.backgroundImage = '';
+                    return;
+                }
+                // If enabled and we have a current track, refresh the image and apply animation state
+                if (this.currentTrack?.album?.cover) {
+                    const large = this.api.getCoverUrl(this.currentTrack.album.cover, '1280');
+                    dyn.style.backgroundImage = `url('${large}')`;
+                    dyn.style.opacity = '1';
+                    if (backgroundSettings.isAnimated()) dyn.classList.add('active');
+                }
+            } catch (err) {
+                console.warn('album-background-toggle handler error', err);
+            }
+        });
+
+        window.addEventListener('background-animation-toggle', (e) => {
+            try {
+                const dyn = document.getElementById('dynamic-background');
+                if (!dyn) return;
+                const enabled = !!e.detail?.enabled;
+                if (enabled && backgroundSettings.isEnabled()) dyn.classList.add('active');
+                else dyn.classList.remove('active');
+            } catch (err) {
+                console.warn('background-animation-toggle handler error', err);
+            }
+        });
         this.dashInitialized = false;
+        // Track DASH failures per-track so we can skip DASH attempts for tracks that repeatedly fail
+        this._badDashTrackCache = new Map(); // trackId -> { count, blockedUntil }
+        this._badDashFailureThreshold = 2; // number of failed attempts before blocking
+        this._badDashBlockDurationMs = 10 * 60 * 1000; // block duration (10 minutes)
 
         this.loadQueueState();
         this.setupMediaSession();
@@ -127,9 +167,102 @@ export class Player {
                 const artistEl = document.querySelector('.now-playing-bar .artist');
 
                 if (coverEl) coverEl.src = this.api.getCoverUrl(track.album?.cover);
+
+                // Update the dynamic blurred background using the album art
+                try {
+                    const dyn = document.getElementById('dynamic-background');
+                    if (dyn) {
+                        // If the album background is disabled, ensure it's cleared
+                        if (!backgroundSettings.isEnabled()) {
+                            dyn.classList.remove('active');
+                            dyn.style.opacity = '0';
+                            dyn.style.backgroundImage = '';
+                            try {
+                                const pageBg = document.getElementById('page-background');
+                                if (pageBg) {
+                                    pageBg.classList.remove('active');
+                                    pageBg.style.backgroundImage = '';
+                                }
+                            } catch (err) {
+                                console.warn('Failed to clear page-background', err);
+                            }
+                        } else {
+                            // Pick sensible sizes for small vs large viewports to save bandwidth
+                            const smallSize = window.innerWidth <= 720 ? '320' : '640';
+                            const largeSize = '1280';
+                            const small = this.api.getCoverUrl(track.album?.cover, smallSize);
+                            const large = this.api.getCoverUrl(track.album?.cover, largeSize);
+
+                            // cross-fade: fade out, swap image to small first, then swap to large once loaded
+                            dyn.classList.remove('active');
+                            dyn.style.opacity = '0';
+
+                            // set overlay color if available (use a stronger alpha for contrast)
+                            const highlight = getComputedStyle(document.documentElement).getPropertyValue('--highlight-rgb').trim();
+                            if (highlight) {
+                                dyn.style.setProperty('--dyn-overlay', `rgba(${highlight}, 0.32)`);
+                            } else {
+                                dyn.style.setProperty('--dyn-overlay', 'rgba(0,0,0,0.32)');
+                            }
+
+                            setTimeout(() => {
+                                // Set low-res first for fast paint
+                                dyn.style.backgroundImage = `url('${small}')`;
+
+                                // Preload larger image and swap when ready for crispness
+                                const img = new Image();
+                                img.crossOrigin = 'anonymous';
+                                img.onload = () => {
+                                    dyn.style.backgroundImage = `url('${large}')`;
+                                };
+                                img.onerror = () => {
+                                    // ignore, keep small image
+                                };
+                                img.src = large;
+
+                                // Also update page-level background element, which lives inside <main>
+                                try {
+                                    const pageBg = document.getElementById('page-background');
+                                    if (pageBg) {
+                                        // Use the higher resolution image for the page header area
+                                        pageBg.style.backgroundImage = `url('${large}')`;
+                                        pageBg.classList.add('active');
+                                    }
+                                } catch (err) {
+                                    console.warn('Failed to update page-background', err);
+                                }
+
+                                // small tick to ensure transition works across browsers
+                                requestAnimationFrame(() => {
+                                    if (backgroundSettings.isAnimated()) dyn.classList.add('active');
+                                    else dyn.classList.remove('active');
+                                    dyn.style.opacity = '1';
+                                });
+                            }, 60);
+                        }
+                    }
+                } catch (e) {
+                    console.warn('Failed to update dynamic background', e);
+                }
+
                 if (titleEl) {
-                    const qualityBadge = createQualityBadgeHTML(track);
-                    titleEl.innerHTML = `${trackTitle} ${qualityBadge}`;
+                    // Only set the title text (no details)
+                    titleEl.textContent = trackTitle;
+                }
+                // Inject quality/details row
+                const qualityRowEl = document.querySelector('.now-playing-bar .now-quality-row');
+                if (qualityRowEl) {
+                    import('./utils.js')
+                        .then(({ createNowPlayingTitleHTML }) => {
+                            // Only extract the details row from the generated HTML
+                            const temp = document.createElement('div');
+                            temp.innerHTML = createNowPlayingTitleHTML(track);
+                            const details = temp.querySelector('.now-quality-row');
+                            qualityRowEl.innerHTML = details ? details.innerHTML : '';
+                        })
+                        .catch(() => {
+                            qualityRowEl.innerHTML = '';
+                        });
                 }
                 if (albumEl) {
                     const albumTitle = track.album?.title || '';
@@ -312,6 +445,10 @@ export class Player {
         try {
             let streamUrl;
 
+            // small retry tracker per track
+            if (!this._playRetries) this._playRetries = new Map();
+            const retries = this._playRetries.get(track.id) || 0;
+
             const isTracker = track.isTracker || (track.id && String(track.id).startsWith('tracker-'));
 
             if (isTracker || (track.audioUrl && !track.isLocal)) {
@@ -329,10 +466,33 @@ export class Player {
                 }
 
                 if (!streamUrl) {
-                    console.warn(`Track ${trackTitle} audio URL is missing. Skipping.`);
-                    track.isUnavailable = true;
-                    this.playNext();
-                    return;
+                        // Try to resolve any available quality using the streaming priority list
+                        try {
+                            const { STREAM_QUALITY_PRIORITY } = await import('./utils.js');
+                            for (const q of STREAM_QUALITY_PRIORITY) {
+                                try {
+                                    const alt = await this.api.getStreamUrl(track.id, q);
+                                    if (alt) {
+                                        streamUrl = alt;
+                                        // store best-effort playback quality on the track (candidate)
+                                        track.playbackQuality = q;
+                                        try {
+                                            const { normalizeQualityToken } = await import('./utils.js');
+                                            track.playbackQualityToken = normalizeQualityToken(q);
+                                        } catch (e) {
+                                            track.playbackQualityToken = null;
+                                        }
+                                }
+                            } catch (e) {}
+                        }
+                    } catch (e) {}
+
+                    if (!streamUrl) {
+                        console.warn(`Track ${trackTitle} audio URL is missing after probe. Marking as unavailable.`);
+                        track.isUnavailable = true;
+                        this.playNext();
+                        return;
+                    }
                 }
 
                 if (isTracker && !streamUrl.startsWith('blob:') && streamUrl.startsWith('http')) {
@@ -350,11 +510,10 @@ export class Player {
                 this.currentRgValues = null;
                 this.applyReplayGain();
 
-                this.audio.src = streamUrl;
-                if (startTime > 0) {
-                    this.audio.currentTime = startTime;
-                }
-                await this.audio.play();
+                // Use resilient play flow
+                const urlToPlay = await this._ensurePlayableSource(streamUrl);
+                if (startTime > 0) this.audio.currentTime = startTime;
+                await this._playUrlWithFallback(urlToPlay, track, startTime);
             } else if (track.isLocal && track.file) {
                 if (this.dashInitialized) {
                     this.dashPlayer.reset(); // Ensure dash is off
@@ -364,11 +523,9 @@ export class Player {
                 this.currentRgValues = null; // No replaygain for local files yet
                 this.applyReplayGain();
 
-                this.audio.src = streamUrl;
-                if (startTime > 0) {
-                    this.audio.currentTime = startTime;
-                }
-                await this.audio.play();
+                const urlToPlay = await this._ensurePlayableSource(streamUrl);
+                if (startTime > 0) this.audio.currentTime = startTime;
+                await this._playUrlWithFallback(urlToPlay, track, startTime);
             } else {
                 // Get track data for ReplayGain (should be cached by API)
                 const trackData = await this.api.getTrack(track.id, this.quality);
@@ -394,37 +551,71 @@ export class Player {
                 }
 
                 // Handle playback
-                if (streamUrl && streamUrl.startsWith('blob:') && !track.isLocal) {
-                    // It's likely a DASH manifest blob URL
-                    if (this.dashInitialized) {
-                        this.dashPlayer.attachSource(streamUrl);
-                    } else {
-                        this.dashPlayer.initialize(this.audio, streamUrl, true);
-                        this.dashInitialized = true;
-                    }
-
-                    if (startTime > 0) {
-                        this.dashPlayer.seek(startTime);
-                    }
-                } else {
+                // Route all resolved stream URLs through the unified _ensurePlayableSource/_playUrlWithFallback
+                try {
                     if (this.dashInitialized) {
                         this.dashPlayer.reset();
                         this.dashInitialized = false;
                     }
-                    this.audio.src = streamUrl;
-                    if (startTime > 0) {
-                        this.audio.currentTime = startTime;
-                    }
-                    await this.audio.play();
+                } catch (e) {
+                    // ignore reset errors
                 }
+
+                // If a blob MPD is present, it will be identified by _ensurePlayableSource => { kind: 'dash', url }
+                const urlToPlay = await this._ensurePlayableSource(streamUrl);
+
+                // If the track has been flagged as a repeated DASH failure, skip DASH proactively
+                const badInfo = this._badDashTrackCache.get(track.id);
+                if (badInfo && badInfo.blockedUntil && badInfo.blockedUntil > Date.now()) {
+                    console.info('Skipping known-bad DASH for track', track.id);
+                    // Force fallback by hunting for other qualities
+                    try {
+                        const { STREAM_QUALITY_PRIORITY } = await import('./utils.js');
+                        for (const q of STREAM_QUALITY_PRIORITY) {
+                            if (q === this.quality) continue; // already attempted
+                            try {
+                                const alt = await this.api.getStreamUrl(track.id, q);
+                                if (alt && alt !== streamUrl) {
+                                    const playableAlt = await this._ensurePlayableSource(alt);
+                                    const ok = await (async () => {
+                                        try {
+                                            return await this._playUrlWithFallback(playableAlt, track, startTime);
+                                        } catch (e) {
+                                            return false;
+                                        }
+                                    })();
+                                    if (ok) {
+                                        return;
+                                    }
+                                }
+                            } catch (e) {}
+                        }
+                    } catch (e) {}
+                }
+
+                // Let the fallback loop try this candidate (which may be a DASH kind or regular URL)
+                await this._playUrlWithFallback(urlToPlay, track, startTime);
             }
 
             this.preloadNextTracks();
         } catch (error) {
             console.error(`Could not play track: ${trackTitle}`, error);
-            // Skip to next track on unexpected error
-            if (recursiveCount < currentQueue.length) {
-                setTimeout(() => this.playNext(recursiveCount + 1), 1000);
+
+            // Provide persistent actions: Retry or Mark Unavailable. Do NOT auto-skip.
+            try {
+                const { showActionNotification } = await import('./downloads.js');
+                showActionNotification(`Playback failed: ${trackTitle}`, 'Retry', () => {
+                    this.playTrackFromQueue(startTime, recursiveCount);
+                }, { persistent: true });
+
+                showActionNotification(`Playback failed: ${trackTitle}`, 'Mark Unavailable', () => {
+                    track.isUnavailable = true;
+                    this.playNext();
+                }, { persistent: true });
+            } catch (e) {
+                // As a last resort, mark unavailable and skip to avoid blocking playback forever
+                track.isUnavailable = true;
+                this.playNext();
             }
         }
     }
@@ -435,6 +626,380 @@ export class Player {
             this.currentQueueIndex = index;
             this.playTrackFromQueue(0, 0);
         }
+    }
+
+    async _probeUrl(url) {
+        try {
+            const resp = await fetch(url, { method: 'HEAD' });
+            if (!resp.ok) return { ok: false };
+            return { ok: true, contentType: resp.headers.get('content-type') };
+        } catch (e) {
+            return { ok: false };
+        }
+    }
+
+    async _ensurePlayableSource(url) {
+        if (!url) throw new Error('No source URL');
+        if (typeof url !== 'string') throw new Error('Invalid source');
+
+        // If blob URL may still be DASH manifest or other streaming manifest. Inspect it.
+        if (url.startsWith('blob:')) {
+            try {
+                const resp = await fetch(url);
+                if (resp.ok) {
+                    const ct = resp.headers.get('content-type') || '';
+                    // DASH manifest
+                    if (ct.includes('application/dash+xml')) return { kind: 'dash', url };
+                    // HLS (m3u8) detection by text content
+                    const text = await resp.text();
+                    if (/\b<\?xml\b|<MPD\b|application\/dash\+xml/i.test(text)) return { kind: 'dash', url };
+                    if (/^#EXTM3U/m.test(text)) return { kind: 'hls', url };
+                    // If it looks like audio (binary) or large blob, assume playable
+                    if (resp.headers.get('content-length') && Number(resp.headers.get('content-length')) > 1024) return url;
+                }
+            } catch (e) {
+                // fallback to treating as raw URL
+                return url;
+            }
+            return url;
+        }
+
+        // Try HEAD to detect content-type
+        try {
+            const head = await this._probeUrl(url);
+            const ct = (head && head.contentType) || '';
+            if (head.ok && ct) {
+                if (ct.includes('audio')) return url;
+                if (ct.includes('application/dash+xml')) return { kind: 'dash', url };
+                if (ct.includes('application/vnd.apple.mpegurl') || ct.includes('application/x-mpegURL')) return { kind: 'hls', url };
+            }
+        } catch (e) {
+            // fallthrough to GET
+        }
+
+        // GET and inspect blob content-type/text
+        try {
+            const resp = await fetch(url);
+            if (!resp.ok) throw new Error('Failed to fetch');
+            const ct = resp.headers.get('content-type') || '';
+            if (ct.includes('audio')) return url;
+            if (ct.includes('application/dash+xml')) return { kind: 'dash', url };
+            if (/^#EXTM3U/m.test(await resp.clone().text())) return { kind: 'hls', url };
+
+            const blob = await resp.blob();
+            if (blob.type && blob.type.includes('audio')) return URL.createObjectURL(blob);
+            // Heuristic: if blob is reasonably large assume it's audio
+            if (blob.size > 1024) return URL.createObjectURL(blob);
+
+            throw new Error(`Fetched resource is not audio (type: ${blob.type})`);
+        } catch (e) {
+            throw e;
+        }
+    }
+
+    async _playUrlWithFallback(initialUrl, track, startTime = 0) {
+        // Robust unified fallback logic that attempts all quality candidates
+        const candidates = [];
+        const push = (entry) => {
+            if (!entry) return;
+            if (typeof entry === 'string') candidates.push({ url: entry });
+            else if (entry && typeof entry === 'object') candidates.push(entry);
+        };
+
+        push(initialUrl);
+
+        // Build ordered candidates from streaming priority list and honor user preference when present
+        try {
+            const { STREAM_QUALITY_PRIORITY } = await import('./utils.js');
+            const baseOrder = STREAM_QUALITY_PRIORITY.slice();
+            // If player has a preferred quality, move it to the front while retaining relative priority
+            let list = baseOrder;
+            if (this.quality) {
+                const idx = baseOrder.indexOf(this.quality);
+                if (idx > 0) {
+                    list = [this.quality, ...baseOrder.slice(0, idx), ...baseOrder.slice(idx + 1)];
+                }
+            }
+
+            for (const q of list) {
+                try {
+                    const alt = await this.api.getStreamUrl(track.id, q);
+                    if (alt) push({ url: alt, quality: q });
+                } catch (e) {
+                    // ignore missing quality for this track
+                }
+            }
+        } catch (e) {
+            console.warn('Could not build candidate quality list', e);
+        }
+
+        // Deduplicate candidates
+        const seen = new Set();
+        const unique = candidates.filter((c) => {
+            if (!c || !c.url) return false;
+            const u = c.url;
+            if (seen.has(u)) return false;
+            seen.add(u);
+            return true;
+        });
+
+        // Helper to try to play a single URL with fallback attempts
+        const tryPlay = async (candidate) => {
+            const MAX_ATTEMPTS = 2;
+            for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+                // Resolve kind/url via _ensurePlayableSource when possible
+                try {
+                    const playable = await this._ensurePlayableSource(candidate.url);
+
+                    // DASH/HLS handling
+                    if (playable && typeof playable === 'object' && (playable.kind === 'dash' || playable.kind === 'hls')) {
+                        if (playable.kind === 'dash') {
+                            try {
+                                // Quick manifest inspection: if MPD contains FLAC codec, it's often not playable in-browser via dash.js.
+                                try {
+                                    const resp = await fetch(playable.url);
+                                    if (resp && resp.ok) {
+                                        const text = await resp.text();
+                                        if (/codecs\s*=\s*["']?[^"'>]*flac/i.test(text) || /<Representation[^>]*codecs=["'][^"']*flac[^"']*["']/i.test(text)) {
+                                            console.info('Skipping DASH candidate: MPD uses FLAC codec which is not supported in this browser.');
+                                            return false; // allow fallback to try LOSSLESS/other qualities
+                                        }
+                                    }
+                                } catch (e) {
+                                    // If manifest fetch fails we'll fall back to the normal attempt below
+                                }
+
+                                if (this.dashInitialized) this.dashPlayer.attachSource(playable.url);
+                                else {
+                                    this.dashPlayer.initialize(this.audio, playable.url, true);
+                                    this.dashInitialized = true;
+                                }
+                                if (startTime > 0 && this.dashInitialized) this.dashPlayer.seek(startTime);
+
+                                // Wait for a short window to detect whether playback actually starts.
+                                // If we don't see 'playing' or a successful audio play() within the timeout, treat as failure so fallback can attempt the next candidate.
+                                const success = await new Promise((resolve) => {
+                                    let settled = false;
+                                    const onPlaying = () => {
+                                        if (!settled) {
+                                            settled = true;
+                                            cleanup();
+                                            resolve(true);
+                                        }
+                                    };
+                                    const onError = () => {
+                                        if (!settled) {
+                                            settled = true;
+                                            cleanup();
+                                            resolve(false);
+                                        }
+                                    };
+                                    const timeoutId = setTimeout(() => {
+                                        if (!settled) {
+                                            settled = true;
+                                            cleanup();
+                                            resolve(false);
+                                        }
+                                    }, 5000);
+
+                                    const cleanup = () => {
+                                        this.audio.removeEventListener('playing', onPlaying);
+                                        this.audio.removeEventListener('error', onError);
+                                        clearTimeout(timeoutId);
+                                    };
+
+                                    this.audio.addEventListener('playing', onPlaying, { once: true });
+                                    this.audio.addEventListener('error', onError, { once: true });
+
+                                    // Attempt to kickstart play (dash.js may already be auto-playing but a manual trigger helps)
+                                    try {
+                                        this.audio.play().catch(() => {});
+                                    } catch (e) {
+                                        // ignore
+                                    }
+                                });
+
+                                if (success) {
+                                    // On success, clear any recorded DASH failures for this track
+                                    if (track && track.id) this._badDashTrackCache.delete(track.id);
+                                    return true;
+                                }
+
+                                // DASH candidate failed to start -> increment failure counter and possibly block
+                                try {
+                                    if (track && track.id) {
+                                        const prev = this._badDashTrackCache.get(track.id) || { count: 0, blockedUntil: 0 };
+                                        prev.count = (prev.count || 0) + 1;
+                                        if (prev.count >= this._badDashFailureThreshold) {
+                                            prev.blockedUntil = Date.now() + this._badDashBlockDurationMs;
+                                            console.info('Marking DASH as blocked for track', track.id, 'until', new Date(prev.blockedUntil).toISOString());
+                                        }
+                                        this._badDashTrackCache.set(track.id, prev);
+                                    }
+                                } catch (e) {}
+
+                                try {
+                                    if (this.dashInitialized) {
+                                        this.dashPlayer.reset();
+                                        this.dashInitialized = false;
+                                    }
+                                } catch (e) {
+                                    console.warn('Failed to reset dash player after failed attempt', e);
+                                }
+
+                                return false;
+                            } catch (e) {
+                                // Treat as failed candidate and allow fallback to next
+                                try {
+                                    if (this.dashInitialized) {
+                                        this.dashPlayer.reset();
+                                        this.dashInitialized = false;
+                                    }
+                                } catch (e2) {}
+                                return false;
+                            }
+                        }
+                        if (playable.kind === 'hls') {
+                            this.audio.src = playable.url;
+                            if (startTime > 0) this.audio.currentTime = startTime;
+                            await this.audio.play();
+                            return true;
+                        }
+                    }
+
+                    // At this point playable may be a resolved URL string or we use candidate.url
+                    const finalUrl = typeof playable === 'string' ? playable : candidate.url;
+
+                    // Quick HEAD probe to avoid HTML error pages
+                    try {
+                        const head = await this._probeUrl(finalUrl);
+                        const ct = (head && head.contentType) ? (head.contentType || '').toLowerCase() : '';
+                        if (head && !head.ok) throw new Error('HEAD not ok');
+                        if (ct.includes('text/html')) throw new Error('HTML response detected');
+                    } catch (e) {
+                        // If HEAD fails or indicates HTML, try a small GET for signature check
+                        try {
+                            const resp = await fetch(finalUrl, { method: 'GET', headers: { Range: 'bytes=0-65535' } });
+                            if (!resp.ok) throw new Error('GET probe failed');
+                            const ctt = (resp.headers.get('content-type') || '').toLowerCase();
+                            if (ctt.includes('text/html')) throw new Error('HTML response detected');
+
+                            // If not clearly audio, inspect blob signature
+                            if (!ctt.includes('audio') && !ctt.includes('application/dash+xml') && !/^#EXTM3U/m.test(await resp.clone().text())) {
+                                const blob = await resp.blob();
+                                const { getExtensionFromBlob } = await import('./utils.js');
+                                const ext = await getExtensionFromBlob(blob).catch(() => null);
+                                if (!ext) throw new Error('Could not verify audio signature');
+                                const objectUrl = URL.createObjectURL(blob);
+                                this.audio.src = objectUrl;
+                                if (startTime > 0) this.audio.currentTime = startTime;
+                                await this.audio.play();
+                                return true;
+                            }
+                        } catch (e2) {
+                            // continue to a normal attempt below
+                        }
+                    }
+
+                    // Normal attempt: set src and play
+                    this.audio.src = finalUrl;
+                    if (startTime > 0) this.audio.currentTime = startTime;
+                    await this.audio.play();
+                    return true;
+                } catch (err) {
+                    console.warn(`Play attempt ${attempt} failed for ${candidate.url}`, err);
+                    // small backoff
+                    await new Promise((r) => setTimeout(r, 250 * attempt));
+                    // continue to next attempt
+                }
+            }
+            return false;
+        };
+
+        // Try each candidate thoroughly
+        for (const c of unique) {
+            try {
+                const success = await tryPlay(c);
+                if (success) {
+                    if (this._playRetries) this._playRetries.delete(track.id);
+                    // Record which candidate succeeded so UI can reflect actual played quality
+                    try {
+                        // Normalize playback quality token so UI can display correct badge
+                        const rawQuality = (c.quality || c.qualityLabel || c.mime || '').toString();
+                        track.playbackQuality = rawQuality;
+                        try {
+                            const { normalizeQualityToken } = await import('./utils.js');
+                            track.playbackQualityToken = normalizeQualityToken(rawQuality);
+                        } catch (e) {
+                            track.playbackQualityToken = null;
+                        }
+
+                        console.info('Playback candidate successful:', c.url, 'quality:', track.playbackQualityToken || track.playbackQuality);
+
+                        // Update now-playing title and details if present
+                        try {
+                            const titleEl = document.querySelector('.now-playing-bar .title');
+                            if (titleEl) {
+                                titleEl.textContent = track.title || '';
+                            }
+                            const qualityRowEl = document.querySelector('.now-playing-bar .now-quality-row');
+                            if (qualityRowEl) {
+                                const { createNowPlayingTitleHTML } = await import('./utils.js');
+                                const temp = document.createElement('div');
+                                temp.innerHTML = createNowPlayingTitleHTML(track);
+                                const details = temp.querySelector('.now-quality-row');
+                                qualityRowEl.innerHTML = details ? details.innerHTML : '';
+                            }
+                        } catch (e) {}
+                    } catch (e) {}
+                    return;
+                }
+            } catch (e) {
+                console.warn('Candidate failed, trying next', e);
+            }
+        }
+
+        // Last-resort: try decoding blobs with AudioContext for each candidate
+        try {
+            const ctx = window.__appAudioContext || (window.__appAudioContext = new (window.AudioContext || window.webkitAudioContext)());
+            for (const c of unique) {
+                try {
+                    const resp = await fetch(c.url);
+                    if (!resp.ok) continue;
+                    const blob = await resp.blob();
+                    if (!blob || blob.size < 1024) continue;
+                    try {
+                        const arr = await blob.arrayBuffer();
+                        await ctx.decodeAudioData(arr.slice(0));
+                        const obj = URL.createObjectURL(blob);
+                        this.audio.src = obj;
+                        if (startTime > 0) this.audio.currentTime = startTime;
+                        await this.audio.play();
+                        if (this._playRetries) this._playRetries.delete(track.id);
+                        return;
+                    } catch (e) {
+                        // decode failed - move on
+                    }
+                } catch (e) {}
+            }
+        } catch (e) {}
+
+        // Exhausted all strategies — provide user with Retry and Mark Unavailable actions
+        try {
+            const { showActionNotification } = await import('./downloads.js');
+            showActionNotification(`Playback failed: ${getTrackTitle(track)}`, 'Retry', () => {
+                this.playTrackFromQueue(startTime, 0);
+            }, { persistent: true });
+
+            showActionNotification(`Playback failed: ${getTrackTitle(track)}`, 'Mark Unavailable', () => {
+                track.isUnavailable = true;
+                this.playNext();
+            }, { persistent: true });
+        } catch (e) {
+            console.warn('Failed to show action notification', e);
+        }
+
+        throw new Error('All playback candidates failed');
     }
 
     playNext(recursiveCount = 0) {

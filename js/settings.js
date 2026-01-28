@@ -386,6 +386,18 @@ export function initializeSettings(scrobbler, player, api, ui) {
         albumBackgroundToggle.checked = backgroundSettings.isEnabled();
         albumBackgroundToggle.addEventListener('change', (e) => {
             backgroundSettings.setEnabled(e.target.checked);
+            // Notify listeners so UI can update immediately
+            window.dispatchEvent(new CustomEvent('album-background-toggle', { detail: { enabled: e.target.checked } }));
+        });
+    }
+
+    // Animated Background Toggle
+    const animatedBackgroundToggle = document.getElementById('animated-background-toggle');
+    if (animatedBackgroundToggle) {
+        animatedBackgroundToggle.checked = backgroundSettings.isAnimated();
+        animatedBackgroundToggle.addEventListener('change', (e) => {
+            backgroundSettings.setAnimated(e.target.checked);
+            window.dispatchEvent(new CustomEvent('background-animation-toggle', { detail: { enabled: e.target.checked } }));
         });
     }
 

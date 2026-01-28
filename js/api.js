@@ -903,83 +903,98 @@ export class LosslessAPI {
         const { onProgress, track } = options;
 
         try {
-            const lookup = await this.getTrack(id, quality);
-            let streamUrl;
-            let blob;
+            // Try qualities in download-priority order, starting from requested quality and falling back as needed.
+            const { DOWNLOAD_QUALITY_PRIORITY } = await import('./utils.js');
+            const base = DOWNLOAD_QUALITY_PRIORITY.slice();
+            // Reorder so requested quality is first (if present)
+            let ordered = base;
+            const idx = base.indexOf(quality);
+            if (idx > 0) ordered = [quality, ...base.slice(0, idx), ...base.slice(idx + 1)];
 
-            if (lookup.originalTrackUrl) {
-                streamUrl = lookup.originalTrackUrl;
-            } else {
-                streamUrl = this.extractStreamUrlFromManifest(lookup.info.manifest);
-                if (!streamUrl) {
-                    throw new Error('Could not resolve stream URL');
-                }
-            }
+            let blob = null;
+            let lastError = null;
 
-            // Handle DASH streams (blob URLs)
-            if (streamUrl.startsWith('blob:')) {
+            for (const q of ordered) {
                 try {
-                    const downloader = new DashDownloader();
-                    blob = await downloader.downloadDashStream(streamUrl, {
-                        signal: options.signal,
-                        onProgress: options.onProgress,
-                    });
-                } catch (dashError) {
-                    console.error('DASH download failed:', dashError);
-                    // Fallback to LOSSLESS if DASH fails
-                    if (quality !== 'LOSSLESS') {
-                        console.warn('Falling back to LOSSLESS (16-bit) download.');
-                        return this.downloadTrack(id, 'LOSSLESS', filename, options);
-                    }
-                    throw dashError;
-                }
-            } else {
-                const response = await fetch(streamUrl, {
-                    cache: 'no-store',
-                    signal: options.signal,
-                });
+                    const lookup = await this.getTrack(id, q);
+                    let streamUrl;
 
-                if (!response.ok) {
-                    throw new Error(`Fetch failed: ${response.status}`);
-                }
-
-                // ... (standard handling for Content-Length and body reader)
-                const contentLength = response.headers.get('Content-Length');
-                const totalBytes = contentLength ? parseInt(contentLength, 10) : 0;
-
-                let receivedBytes = 0;
-
-                if (response.body && onProgress) {
-                    const reader = response.body.getReader();
-                    const chunks = [];
-
-                    while (true) {
-                        const { done, value } = await reader.read();
-                        if (done) break;
-
-                        if (value) {
-                            chunks.push(value);
-                            receivedBytes += value.byteLength;
-
-                            onProgress({
-                                stage: 'downloading',
-                                receivedBytes,
-                                totalBytes: totalBytes || undefined,
-                            });
+                    if (lookup.originalTrackUrl) {
+                        streamUrl = lookup.originalTrackUrl;
+                    } else {
+                        streamUrl = this.extractStreamUrlFromManifest(lookup.info.manifest);
+                        if (!streamUrl) {
+                            throw new Error('Could not resolve stream URL');
                         }
                     }
 
-                    blob = new Blob(chunks, { type: response.headers.get('Content-Type') || 'audio/flac' });
-                } else {
-                    blob = await response.blob();
-                    if (onProgress) {
-                        onProgress({
-                            stage: 'downloading',
-                            receivedBytes: blob.size,
-                            totalBytes: blob.size,
+                    // Handle DASH streams (blob URLs)
+                    if (streamUrl.startsWith('blob:')) {
+                        const downloader = new DashDownloader();
+                        blob = await downloader.downloadDashStream(streamUrl, {
+                            signal: options.signal,
+                            onProgress: options.onProgress,
                         });
+                    } else {
+                        const response = await fetch(streamUrl, {
+                            cache: 'no-store',
+                            signal: options.signal,
+                        });
+
+                        if (!response.ok) throw new Error(`Fetch failed: ${response.status}`);
+
+                        const contentLength = response.headers.get('Content-Length');
+                        const totalBytes = contentLength ? parseInt(contentLength, 10) : 0;
+
+                        let receivedBytes = 0;
+
+                        if (response.body && onProgress) {
+                            const reader = response.body.getReader();
+                            const chunks = [];
+
+                            while (true) {
+                                const { done, value } = await reader.read();
+                                if (done) break;
+
+                                if (value) {
+                                    chunks.push(value);
+                                    receivedBytes += value.byteLength;
+
+                                    onProgress({
+                                        stage: 'downloading',
+                                        receivedBytes,
+                                        totalBytes: totalBytes || undefined,
+                                    });
+                                }
+                            }
+
+                            blob = new Blob(chunks, { type: response.headers.get('Content-Type') || 'audio/flac' });
+                        } else {
+                            blob = await response.blob();
+                            if (onProgress) {
+                                onProgress({
+                                    stage: 'downloading',
+                                    receivedBytes: blob.size,
+                                    totalBytes: blob.size,
+                                });
+                            }
+                        }
                     }
+
+                    // If successful, stop trying other qualities and record which quality succeeded
+                    if (blob) {
+                        chosenQuality = q;
+                        break; // proceed to final processing after loop
+                    }
+                } catch (err) {
+                    lastError = err;
+                    console.warn('Download attempt failed for quality', q, err);
+                    // try next quality in the ordered list
                 }
+            }
+
+            if (!blob) {
+                throw lastError || new Error('All download attempts failed');
             }
 
             // Add metadata if track information is provided
@@ -990,7 +1005,8 @@ export class LosslessAPI {
                         message: 'Adding metadata...',
                     });
                 }
-                blob = await addMetadataToAudio(blob, track, this, quality);
+                const usedQuality = typeof chosenQuality === 'string' ? chosenQuality : quality;
+                blob = await addMetadataToAudio(blob, track, this, usedQuality);
             }
 
             // Detect actual format and fix filename extension if needed

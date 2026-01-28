@@ -13,6 +13,7 @@ import { LastFMScrobbler } from './lastfm.js';
 import { LyricsManager, openLyricsPanel, clearLyricsPanelSync } from './lyrics.js';
 import { createRouter, updateTabTitle, navigate } from './router.js';
 import { initializeSettings } from './settings.js';
+import { waveformGenerator } from './waveform.js';
 import { initializePlayerEvents, initializeTrackInteractions, handleTrackAction } from './events.js';
 import { initializeUIInteractions } from './ui-interactions.js';
 import {
@@ -191,7 +192,168 @@ function hideOfflineNotification() {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+    // Hero greeting for homepage
+    const greetingEl = document.getElementById('home-greeting');
+    const greetingSubEl = document.getElementById('home-greeting-sub');
+    if (greetingEl && greetingSubEl) {
+        const hour = new Date().getHours();
+        let greeting = 'Welcome';
+        if (hour >= 5 && hour < 12) greeting = 'Good morning';
+        else if (hour >= 12 && hour < 18) greeting = 'Good afternoon';
+        else if (hour >= 18 && hour < 23) greeting = 'Good evening';
+        else greeting = 'Good night';
+
+        // Cherry-picked random subtitle messages
+        const messages = [
+            'What do you want to listen to today?',
+            'Find your next favorite track.',
+            'Let the music set the mood.',
+            'Discover something new.',
+            'Your soundtrack, your vibe.',
+            'Ready to explore fresh sounds?',
+            'Pick a playlist and press play.',
+            'Music for every moment.',
+            'Start your listening journey.',
+            'What will you play next?'
+        ];
+        const randomMsg = messages[Math.floor(Math.random() * messages.length)];
+        greetingEl.textContent = greeting;
+        greetingSubEl.textContent = randomMsg;
+    }
     const api = new LosslessAPI(apiSettings);
+
+    // Restore persisted sidebar state and set nav link labels for tooltips
+    try {
+        const collapsed = localStorage.getItem('sidebar-collapsed') === 'true';
+        if (collapsed) document.body.classList.add('sidebar-collapsed');
+    } catch (e) {}
+
+    document.querySelectorAll('.sidebar-nav .nav-item a').forEach((a) => {
+        const label = a.textContent.trim();
+        if (label) {
+            a.dataset.label = label;
+            if (!a.title) a.title = label;
+            a.setAttribute('aria-label', label);
+        }
+    });
+
+// Initialize Feather icons (SVG). Replace placeholders and watch for dynamic content.
+    (function initFeatherIcons() {
+        function replaceIcons() {
+            try {
+                if (window.feather && feather.replace) {
+                    feather.replace();
+                }
+            } catch (e) {}
+        }
+
+        // run now and again after a short delay (CDN may load slowly)
+        replaceIcons();
+        setTimeout(replaceIcons, 1000);
+
+        const observer = new MutationObserver((mutations) => {
+            for (const m of mutations) {
+                for (const node of m.addedNodes) {
+                    if (node.nodeType !== 1) continue;
+                    if (node.hasAttribute && node.hasAttribute('data-feather')) {
+                        replaceIcons();
+                    }
+                    try {
+                        if (node.querySelector && node.querySelector('[data-feather]')) replaceIcons();
+                    } catch (e) {}
+                }
+            }
+        });
+        observer.observe(document.body, { childList: true, subtree: true });
+    })();
+
+    // Favorites tabs accessibility & interactions (library page)
+    (function initializeFavoritesTabs() {
+        const favTabs = document.querySelectorAll('.favorites-row .search-tab');
+        if (!favTabs || favTabs.length === 0) return;
+        favTabs.forEach((btn, idx) => {
+            btn.setAttribute('role', 'tab');
+            btn.setAttribute('tabindex', btn.classList.contains('active') ? '0' : '-1');
+            btn.setAttribute('aria-selected', btn.classList.contains('active') ? 'true' : 'false');
+
+            btn.addEventListener('click', () => {
+                favTabs.forEach((b) => {
+                    b.classList.remove('active');
+                    b.setAttribute('aria-selected', 'false');
+                    b.setAttribute('tabindex', '-1');
+                });
+                btn.classList.add('active');
+                btn.setAttribute('aria-selected', 'true');
+                btn.setAttribute('tabindex', '0');
+
+                const tab = btn.dataset.tab;
+                document.querySelectorAll('.search-tab-content').forEach((c) => c.classList.remove('active'));
+                const target = document.getElementById('library-tab-' + tab);
+                if (target) target.classList.add('active');
+            });
+
+            btn.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowRight') {
+                    e.preventDefault();
+                    const next = favTabs[(idx + 1) % favTabs.length];
+                    next.focus();
+                } else if (e.key === 'ArrowLeft') {
+                    e.preventDefault();
+                    const prev = favTabs[(idx - 1 + favTabs.length) % favTabs.length];
+                    prev.focus();
+                } else if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    btn.click();
+                }
+            });
+        });
+    })();
+
+    // Initialize style settings
+    try {
+        const elegant = localStorage.getItem('elegant-mode') === 'true';
+        if (elegant) document.body.classList.add('elegant-mode');
+
+        // Show track durations (default: hidden per request)
+        const showDurations = localStorage.getItem('show-track-durations') === 'true';
+        if (!showDurations) document.body.classList.add('hide-track-durations');
+
+        // Reflect in UI controls
+        const elegantToggle = document.getElementById('elegant-mode-toggle');
+        if (elegantToggle) elegantToggle.checked = elegant;
+        const durationToggle = document.getElementById('show-track-durations-toggle');
+        if (durationToggle) durationToggle.checked = showDurations;
+
+        // Listeners
+        elegantToggle?.addEventListener('change', (e) => {
+            const on = e.target.checked;
+            document.body.classList.toggle('elegant-mode', on);
+            try { localStorage.setItem('elegant-mode', on ? 'true' : 'false'); } catch (e) {}
+        });
+        // Initialize and wire up the border radius range control
+        const borderRange = document.getElementById('border-radius-range');
+        const borderValueEl = document.getElementById('border-radius-value');
+        const savedRadius = localStorage.getItem('global-border-radius');
+        const radiusNum = savedRadius !== null ? Number(savedRadius) : 8;
+        document.documentElement.style.setProperty('--radius', radiusNum + 'px');
+        if (borderRange) {
+            borderRange.value = radiusNum;
+            if (borderValueEl) borderValueEl.textContent = `${radiusNum}px`;
+            borderRange.addEventListener('input', (e) => {
+                const val = Number(e.target.value);
+                document.documentElement.style.setProperty('--radius', val + 'px');
+                if (borderValueEl) borderValueEl.textContent = `${val}px`;
+            });
+            borderRange.addEventListener('change', (e) => {
+                try { localStorage.setItem('global-border-radius', String(e.target.value)); } catch (e) {}
+            });
+        }
+        durationToggle?.addEventListener('change', (e) => {
+            const on = e.target.checked;
+            document.body.classList.toggle('hide-track-durations', !on);
+            try { localStorage.setItem('show-track-durations', on ? 'true' : 'false'); } catch (e) {}
+        });
+    } catch (e) {}
 
     const audioPlayer = document.getElementById('audio-player');
 
@@ -222,6 +384,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const currentQuality = localStorage.getItem('playback-quality') || 'HI_RES_LOSSLESS';
     const player = new Player(audioPlayer, api, currentQuality);
+
+    // Enable compact mode by default for denser UI per user request
+    document.body.classList.add('compact-mode');
 
     const ui = new UIRenderer(api, player);
     const scrobbler = new LastFMScrobbler();
@@ -339,6 +504,33 @@ document.addEventListener('DOMContentLoaded', async () => {
     const castBtn = document.getElementById('cast-btn');
     initializeCasting(audioPlayer, castBtn);
 
+    // Resume audio-related AudioContexts on first user gesture to satisfy autoplay policies
+    (function resumeAudioOnGesture() {
+        async function resumeAll() {
+            try {
+                if (waveformGenerator && waveformGenerator.audioContext && waveformGenerator.audioContext.state === 'suspended') {
+                    await waveformGenerator.audioContext.resume();
+                    console.info('Waveform AudioContext resumed');
+                }
+            } catch (e) {}
+
+            try {
+                if (window.ui && window.ui.visualizer && window.ui.visualizer.audioContext && window.ui.visualizer.audioContext.state === 'suspended') {
+                    await window.ui.visualizer.audioContext.resume();
+                    console.info('Visualizer AudioContext resumed');
+                }
+            } catch (e) {}
+
+            document.removeEventListener('pointerdown', resumeAll);
+            document.removeEventListener('keydown', resumeAll);
+            document.removeEventListener('touchstart', resumeAll);
+        }
+
+        document.addEventListener('pointerdown', resumeAll, { once: true });
+        document.addEventListener('keydown', resumeAll, { once: true });
+        document.addEventListener('touchstart', resumeAll, { once: true });
+    })();
+
     // Restore UI state for the current track (like button, theme)
     if (player.currentTrack) {
         ui.setCurrentTrack(player.currentTrack);
@@ -391,16 +583,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         ui.closeFullscreenCover();
     });
 
-    document.getElementById('sidebar-toggle')?.addEventListener('click', () => {
-        document.body.classList.toggle('sidebar-collapsed');
-        const isCollapsed = document.body.classList.contains('sidebar-collapsed');
-        const toggleBtn = document.getElementById('sidebar-toggle');
-        if (toggleBtn) {
-            toggleBtn.innerHTML = isCollapsed
-                ? '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>'
-                : '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>';
-        }
-    });
+    // Sidebar collapse control removed — keep previously persisted state but no toggle button.
+    // If needed, user can still collapse via settings by toggling `sidebar-collapsed` in localStorage.
+
 
     document.getElementById('nav-back')?.addEventListener('click', () => {
         window.history.back();
@@ -617,6 +802,15 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('folder-cover-input').value = '';
             modal.classList.add('active');
             document.getElementById('folder-name-input').focus();
+        }
+
+        if (e.target.closest('#toggle-library-view-btn')) {
+            const page = document.getElementById('page-library');
+            if (!page) return;
+            const isNowList = page.classList.toggle('list-view');
+            localStorage.setItem('libraryView', isNowList ? 'list' : 'grid');
+            // Re-render library content if necessary
+            if (typeof ui !== 'undefined' && ui.renderLibraryPage) ui.renderLibraryPage();
         }
 
         if (e.target.closest('#folder-modal-save')) {
@@ -1280,6 +1474,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     await handleRouteChange();
+
+    // Restore library view (grid or list) from settings
+    try {
+        const savedView = localStorage.getItem('libraryView') || 'grid';
+        if (savedView === 'list') {
+            document.getElementById('page-library')?.classList.add('list-view');
+        }
+    } catch (e) {
+        // ignore
+    }
 
     window.addEventListener('popstate', handleRouteChange);
 

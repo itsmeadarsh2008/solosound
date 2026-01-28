@@ -3,28 +3,31 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Monochrome Music</title>
+        <title>SoloSound</title>
         <meta name="theme-color" content="#000000" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <base href="/" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        <meta name="apple-mobile-web-app-title" content="Monochrome" />
+        <meta name="apple-mobile-web-app-title" content="SoloSound" />
         <meta name="description" content="A minimalist music streaming application" />
         <link rel="apple-touch-icon" href="/assets/logo.svg" />
         <link rel="manifest" href="/manifest.json" />
         <link rel="icon" href="/assets/logo.svg" type="image/svg+xml" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-        <link
-            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
-            rel="stylesheet"
-        />
+        <link href="https://fonts.googleapis.com/css2?family=Righteous&display=swap&font-display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap&font-display=swap" rel="stylesheet">
+        <!-- Icons: Feather icons (SVG) loaded via CDN -->
+        <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined&icon_names=home,library_music,history,settings,person,download,refresh,search,play_arrow,pause,favorite,more_vert,shuffle,repeat,queue_music,add,folder&display=block" rel="stylesheet">
+
         <link rel="stylesheet" href="/styles.css" />
+        <link rel="stylesheet" href="/animation.css" />
     </head>
 
     <body>
         <audio id="audio-player" crossorigin="anonymous"></audio>
+        <div id="dynamic-background" class="dynamic-bg" aria-hidden="true"></div>
         <div id="context-menu">
             <ul>
                 <li data-action="shuffle-play-card" data-type-filter="album,playlist,mix,user-playlist">
@@ -459,7 +462,7 @@
                 <div class="missing-tracks-content">
                     <p>
                         Unfortunately, some songs weren't able to be added. This could be an issue with our import
-                        system - try searching for the song and adding it. It could also be due to Monochrome not having
+                        system - try searching for the song and adding it. It could also be due to SoloSound not having
                         the song :(
                     </p>
                     <div class="missing-tracks-list">
@@ -695,158 +698,40 @@
             <aside class="sidebar">
                 <div class="sidebar-content">
                     <div class="sidebar-logo">
-                        <svg
-                            class="app-logo"
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="200"
-                            height="200"
-                            viewBox="14.75 14.75 70.5 70.5"
-                        >
-                            <g fill="currentColor">
-                                <path
-                                    d="M38.25 14.75H85.25V61.75H61.75V38.25H38.25ZM14.75 38.25H38.25V61.75H61.75V85.25H14.75Z"
-                                />
-                            </g>
-                        </svg>
-                        <span>Monochrome</span>
-                        <button
-                            id="sidebar-toggle"
-                            class="btn-icon desktop-only"
-                            style="margin-left: auto"
-                            title="Collapse Sidebar"
-                        >
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="20"
-                                height="20"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="2"
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                            >
-                                <path d="m15 18-6-6 6-6" />
-                            </svg>
-                        </button>
+                        <!-- Show app title above nav -->
+                        <span class="sidebar-title">SoloSound</span>
+
+                        
                     </div>
                     <nav class="sidebar-nav main">
                         <ul>
                             <li class="nav-item">
                                 <a href="/">
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        width="24"
-                                        height="24"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        stroke-width="2"
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        class="lucide lucide-house-icon lucide-house"
-                                    >
-                                        <path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8" />
-                                        <path
-                                            d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"
-                                        />
-                                    </svg>
+                                    <i data-feather="home" class="icon" aria-hidden="true"></i>
                                     <span>Home</span>
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a href="/library">
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        width="24"
-                                        height="24"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        stroke-width="2"
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                    >
-                                        <path d="m16 6 4 14" />
-                                        <path d="M12 6v14" />
-                                        <path d="M8 8v12" />
-                                        <path d="M4 4v16" />
-                                    </svg>
+                                    <i data-feather="music" class="icon" aria-hidden="true"></i>
                                     <span>Library</span>
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a href="/recent">
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        width="24"
-                                        height="24"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        stroke-width="2"
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                    >
-                                        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-                                        <path d="M3 3v5h5" />
-                                        <path d="M12 7v5l4 2" />
-                                    </svg>
+                                    <i data-feather="clock" class="icon" aria-hidden="true"></i>
                                     <span>Recent</span>
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a href="/settings">
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        width="24"
-                                        height="24"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        stroke-width="2"
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                    >
-                                        <path
-                                            d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915"
-                                        />
-                                        <circle cx="12" cy="12" r="3" />
-                                    </svg>
+                                    <i data-feather="settings" class="icon" aria-hidden="true"></i>
                                     <span>Settings</span>
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a href="/account">
-                                    <svg
-                                        width="24"
-                                        height="24"
-                                        viewBox="0 0 24 24"
-                                        id="Layer_1"
-                                        data-name="Layer 1"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        fill="currentColor"
-                                    >
-                                        <g stroke-width="0"></g>
-                                        <g stroke-linecap="round" stroke-linejoin="round"></g>
-                                        <g>
-                                            <defs>
-                                                <style>
-                                                    .cls-1 {
-                                                        fill: none;
-                                                        stroke: currentColor;
-                                                        stroke-miterlimit: 10;
-                                                        stroke-width: 1.9200000000000004;
-                                                    }
-                                                </style>
-                                            </defs>
-                                            <circle class="cls-1" cx="12" cy="7.25" r="5.73"></circle>
-                                            <path
-                                                class="cls-1"
-                                                d="M1.5,23.48l.37-2.05A10.3,10.3,0,0,1,12,13h0a10.3,10.3,0,0,1,10.13,8.45l.37,2.05"
-                                            ></path>
-                                        </g>
-                                    </svg>
+                                    <i data-feather="user" class="icon" aria-hidden="true"></i>
                                     <span>Account</span>
                                 </a>
                             </li>
@@ -855,71 +740,9 @@
                     <nav class="sidebar-nav">
                         <ul>
                             <li class="nav-item">
-                                <a href="/about">
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        width="24"
-                                        height="24"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        stroke-width="2"
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        class="lucide lucide-info-icon lucide-info"
-                                    >
-                                        <circle cx="12" cy="12" r="10" />
-                                        <path d="M12 16v-4" />
-                                        <path d="M12 8h.01" />
-                                    </svg>
-                                    <span>About</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="/download">
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        width="24"
-                                        height="24"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        stroke-width="2"
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                    >
-                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                                        <polyline points="7 10 12 15 17 10" />
-                                        <line x1="12" x2="12" y1="15" y2="3" />
-                                    </svg>
-                                    <span>Download</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="https://monochrome.samidy.com/discord" target="_blank">
-                                    <svg
-                                        width="64px"
-                                        height="64px"
-                                        viewBox="0 -28.5 256 256"
-                                        version="1.1"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        xmlns:xlink="http://www.w3.org/1999/xlink"
-                                        preserveAspectRatio="xMidYMid"
-                                        fill="#000000"
-                                    >
-                                        <g stroke-width="0"></g>
-                                        <g stroke-linecap="round" stroke-linejoin="round"></g>
-                                        <g>
-                                            <g>
-                                                <path
-                                                    d="M216.856339,16.5966031 C200.285002,8.84328665 182.566144,3.2084988 164.041564,0 C161.766523,4.11318106 159.108624,9.64549908 157.276099,14.0464379 C137.583995,11.0849896 118.072967,11.0849896 98.7430163,14.0464379 C96.9108417,9.64549908 94.1925838,4.11318106 91.8971895,0 C73.3526068,3.2084988 55.6133949,8.86399117 39.0420583,16.6376612 C5.61752293,67.146514 -3.4433191,116.400813 1.08711069,164.955721 C23.2560196,181.510915 44.7403634,191.567697 65.8621325,198.148576 C71.0772151,190.971126 75.7283628,183.341335 79.7352139,175.300261 C72.104019,172.400575 64.7949724,168.822202 57.8887866,164.667963 C59.7209612,163.310589 61.5131304,161.891452 63.2445898,160.431257 C105.36741,180.133187 151.134928,180.133187 192.754523,160.431257 C194.506336,161.891452 196.298154,163.310589 198.110326,164.667963 C191.183787,168.842556 183.854737,172.420929 176.223542,175.320965 C180.230393,183.341335 184.861538,190.991831 190.096624,198.16893 C211.238746,191.588051 232.743023,181.531619 254.911949,164.955721 C260.227747,108.668201 245.831087,59.8662432 216.856339,16.5966031 Z M85.4738752,135.09489 C72.8290281,135.09489 62.4592217,123.290155 62.4592217,108.914901 C62.4592217,94.5396472 72.607595,82.7145587 85.4738752,82.7145587 C98.3405064,82.7145587 108.709962,94.5189427 108.488529,108.914901 C108.508531,123.290155 98.3405064,135.09489 85.4738752,135.09489 Z M170.525237,135.09489 C157.88039,135.09489 147.510584,123.290155 147.510584,108.914901 C147.510584,94.5396472 157.658606,82.7145587 170.525237,82.7145587 C183.391518,82.7145587 193.761324,94.5189427 193.539891,108.914901 C193.539891,123.290155 183.391518,135.09489 170.525237,135.09489 Z"
-                                                    fill="#8E8E96"
-                                                    fill-rule="nonzero"
-                                                ></path>
-                                            </g>
-                                        </g>
-                                    </svg>
-                                    <span>Discord</span>
+                                <a href="/collections" data-link title="Collections" aria-label="Collections">
+                                    <svg class="icon" viewBox="0 0 24 24" width="20" height="20" role="img" aria-hidden="true"><path fill="currentColor" d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zm0-10v2h14V7H7z"/></svg>
+                                    <span>Collections</span>
                                 </a>
                             </li>
                         </ul>
@@ -932,34 +755,10 @@
                 <header class="main-header">
                     <div class="navigation-controls desktop-only">
                         <button id="nav-back" class="nav-btn" title="Go Back">
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="24"
-                                height="24"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="2"
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                            >
-                                <path d="m15 18-6-6 6-6" />
-                            </svg>
+                            <i data-feather="arrow-left" class="icon" aria-hidden="true"></i>
                         </button>
                         <button id="nav-forward" class="nav-btn" title="Go Forward">
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="24"
-                                height="24"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="2"
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                            >
-                                <path d="m9 18 6-6-6-6" />
-                            </svg>
+                            <i data-feather="arrow-right" class="icon" aria-hidden="true"></i>
                         </button>
                     </div>
                     <button class="hamburger-menu" id="hamburger-btn" title="Open navigation">
@@ -1001,15 +800,19 @@
                 </header>
 
                 <div id="page-home" class="page">
-                    <div id="home-welcome" style="display: none; text-align: center; padding: 4rem 2rem">
-                        <h2 style="margin-bottom: 1rem">Welcome to Monochrome</h2>
+                    <section id="home-hero">
+                        <div id="home-greeting" class="hero-greeting"></div>
+                        <div id="home-greeting-sub" class="hero-greeting-sub"></div>
+                    </section>
+                    <div id="home-welcome" style="display: none; text-align: center; padding: 2rem 2rem 1rem 2rem;">
+                        <h2 style="margin-bottom: 1rem">Welcome to SoloSound</h2>
                         <p style="color: var(--muted-foreground)">
                             You haven't listened to anything yet. Search for your favorite songs to get started!
                         </p>
                     </div>
 
                     <div id="home-content" style="display: none">
-                        <section class="content-section">
+                        <section class="content-section home-recommended-section">
                             <div
                                 style="
                                     display: flex;
@@ -1152,10 +955,22 @@
                 <div id="page-search" class="page">
                     <h2 class="section-title" id="search-results-title">Search Results</h2>
                     <div class="search-tabs">
-                        <button class="search-tab active" data-tab="tracks">Tracks</button>
-                        <button class="search-tab" data-tab="albums">Albums</button>
-                        <button class="search-tab" data-tab="artists">Artists</button>
-                        <button class="search-tab" data-tab="playlists">Playlists</button>
+                        <button class="search-tab active" data-tab="tracks" title="Tracks">
+                            <svg class="icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false" role="img"><path fill="currentColor" d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6z"/></svg>
+                            <span class="tab-label">Tracks</span>
+                        </button>
+                        <button class="search-tab" data-tab="albums" title="Albums">
+                            <svg class="icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false" role="img"><path fill="currentColor" d="M12 3C7 3 3 7 3 12s4 9 9 9 9-4 9-9-4-9-9-9zm0 13a4 4 0 110-8 4 4 0 010 8z"/></svg>
+                            <span class="tab-label">Albums</span>
+                        </button>
+                        <button class="search-tab" data-tab="artists" title="Artists">
+                            <svg class="icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false" role="img"><path fill="currentColor" d="M12 12c2.7 0 5-2.3 5-5s-2.3-5-5-5-5 2.3-5 5 2.3 5 5 5zm0 2c-3.3 0-10 1.7-10 5v3h20v-3c0-3.3-6.7-5-10-5z"/></svg>
+                            <span class="tab-label">Artists</span>
+                        </button>
+                        <button class="search-tab" data-tab="playlists" title="Playlists">
+                            <svg class="icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false" role="img"><path fill="currentColor" d="M3 6h14v2H3V6zm0 4h14v2H3v-2zm0 4h10v2H3v-2z"/></svg>
+                            <span class="tab-label">Playlists</span>
+                        </button>
                     </div>
                     <div class="search-tab-content active" id="search-tab-tracks">
                         <div class="track-list" id="search-tracks-container"></div>
@@ -1174,13 +989,15 @@
                 <div id="page-library" class="page">
                     <section class="content-section">
                         <div class="library-header">
-                            <h2>My Playlists</h2>
-                            <button id="create-playlist-btn" class="btn-primary" style="margin: 10px 0">
-                                Create Playlist
-                            </button>
-                            <button id="create-folder-btn" class="btn-secondary" style="margin: 10px 0 10px 10px">
-                                Create Folder
-                            </button>
+                            <div class="title-block">
+                                <h2>My Playlists</h2>
+                                <p class="muted">No playlists yet. Create your first playlist!</p>
+                            </div>
+                            <div class="controls" style="margin-left:auto">
+                                <button id="create-playlist-btn" class="btn-primary btn-create" aria-label="Create Playlist" title="Create Playlist">Create Playlist</button>
+
+                                <button id="create-folder-btn" class="btn-secondary" aria-label="Folder" title="Folder">Folder</button>
+                            </div>
                         </div>
                         <div class="card-grid" id="my-folders-container"></div>
                         <div class="card-grid" id="my-playlists-container"></div>
@@ -1188,13 +1005,31 @@
 
                     <section class="content-section">
                         <h2 class="section-title">Favorites</h2>
-                        <div class="search-tabs">
-                            <button class="search-tab active" data-tab="tracks">Liked Tracks</button>
-                            <button class="search-tab" data-tab="albums">Albums</button>
-                            <button class="search-tab" data-tab="artists">Artists</button>
-                            <button class="search-tab" data-tab="playlists">Playlists and Mixes</button>
-                            <button class="search-tab" data-tab="local">Local Files</button>
+                        <div class="favorites-row">
+                            <p class="muted small">Quick access to your liked collections. Click a category to view items.</p>
+                            <div class="search-tabs" role="tablist" aria-label="Favorites categories">
+                                <button class="search-tab active" data-tab="tracks" title="Liked Tracks" role="tab" aria-selected="true">
+                                    <svg class="icon" viewBox="0 0 24 24" width="28" height="28" aria-hidden="true" focusable="false" role="img"><path fill="currentColor" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 6 4 4 6.5 4c1.54 0 3.04.99 3.57 2.36h1.87C14.46 4.99 15.96 4 17.5 4 20 4 22 6 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                                    <span class="tab-label">Tracks</span>
+                                </button>
+                                <button class="search-tab" data-tab="albums" title="Albums">
+                                    <svg class="icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false" role="img"><path fill="currentColor" d="M12 3C7 3 3 7 3 12s4 9 9 9 9-4 9-9-4-9-9-9zm0 13a4 4 0 110-8 4 4 0 010 8z"/></svg>
+                                    <span class="tab-label">Albums</span>
+                                </button>
+                                <button class="search-tab" data-tab="artists" title="Artists">
+                                    <svg class="icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false" role="img"><path fill="currentColor" d="M12 12c2.7 0 5-2.3 5-5s-2.3-5-5-5-5 2.3-5 5 2.3 5 5 5zm0 2c-3.3 0-10 1.7-10 5v3h20v-3c0-3.3-6.7-5-10-5z"/></svg>
+                                    <span class="tab-label">Artists</span>
+                                </button>
+                            <button class="search-tab" data-tab="playlists" title="Playlists and Mixes">
+                                <svg class="icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false" role="img"><path fill="currentColor" d="M3 6h14v2H3V6zm0 4h14v2H3v-2zm0 4h10v2H3v-2z"/></svg>
+                                <span class="tab-label">Playlists</span>
+                            </button>
+                            <button class="search-tab" data-tab="local" title="Local Files">
+                                <svg class="icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false" role="img"><path fill="currentColor" d="M10 4H4c-1.1 0-2 .9-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>
+                                <span class="tab-label">Local</span>
+                            </button>
                         </div>
+                        </div> <!-- /.favorites-row -->
                         <div class="search-tab-content active" id="library-tab-tracks">
                             <div style="display: flex; justify-content: flex-start; gap: 0.5rem; margin-bottom: 0.5rem">
                                 <button
@@ -1873,6 +1708,39 @@
                                     <span class="slider"></span>
                                 </label>
                             </div>
+
+                            <div class="setting-item">
+                                <div class="info">
+                                    <span class="label">Elegant Mode</span>
+                                    <span class="description">Use rounded corners and softer shadows for an elegant look.</span>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="elegant-mode-toggle" />
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+
+                            <div class="setting-item">
+                                <div class="info">
+                                    <span class="label">Show Track Durations</span>
+                                    <span class="description">Toggle the duration display in track lists.</span>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="show-track-durations-toggle" />
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+
+                            <div class="setting-item">
+                                <div class="info">
+                                    <span class="label">Global Border Radius</span>
+                                    <span class="description">Control the global border radius for UI elements.</span>
+                                </div>
+                                <div style="display:flex; align-items:center; gap:0.75rem">
+                                    <input type="range" id="border-radius-range" min="0" max="24" step="1" />
+                                    <div id="border-radius-value" style="width:36px; text-align:right">8px</div>
+                                </div>
+                            </div>
                             <div class="setting-item">
                                 <div class="info">
                                     <span class="label">Smooth Scrolling</span>
@@ -1898,6 +1766,19 @@
                                     <span class="slider"></span>
                                 </label>
                             </div>
+
+                            <div class="setting-item">
+                                <div class="info">
+                                    <span class="label">Animated Background</span>
+                                    <span class="description"
+                                        >Enable subtle pan/zoom and hue animations on the blurred album background</span
+                                    >
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="animated-background-toggle" />
+                                    <span class="slider"></span>
+                                </label>
+                            </div> 
                             <div class="setting-item">
                                 <div class="info">
                                     <span class="label">Full-screen Visualizer</span>
@@ -2580,6 +2461,7 @@
                     <img src="/assets/appicon.png" alt="Current Track Cover" class="cover" />
                     <div class="details">
                         <div class="title">Select a song</div>
+                        <div class="now-quality-row"></div>
                         <div class="album"></div>
                         <div class="artist"></div>
                     </div>
@@ -2857,6 +2739,7 @@
         </div>
         <script src="https://unpkg.com/@studio-freight/lenis"></script>
         <script src="https://cdn.jsdelivr.net/npm/pocketbase@0.21.3/dist/pocketbase.umd.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
         <script type="module" src="/js/app.js"></script>
     </body>
 </html>

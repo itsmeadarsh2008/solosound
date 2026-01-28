@@ -446,18 +446,33 @@ export const lyricsSettings = {
 
 export const backgroundSettings = {
     STORAGE_KEY: 'album-background-enabled',
+    ANIMATED_KEY: 'album-background-animated',
 
     isEnabled() {
         try {
-            // Default to true if not set
-            return localStorage.getItem(this.STORAGE_KEY) !== 'false';
+            // Default to false if not set (improves initial readability and avoids large downloads)
+            return localStorage.getItem(this.STORAGE_KEY) === 'true';
         } catch {
-            return true;
+            return false;
         }
     },
 
     setEnabled(enabled) {
         localStorage.setItem(this.STORAGE_KEY, enabled ? 'true' : 'false');
+    },
+
+    // Animation control for the blurred background layer
+    isAnimated() {
+        try {
+            // Default to true if not set
+            return localStorage.getItem(this.ANIMATED_KEY) !== 'false';
+        } catch {
+            return true;
+        }
+    },
+
+    setAnimated(enabled) {
+        localStorage.setItem(this.ANIMATED_KEY, enabled ? 'true' : 'false');
     },
 };
 

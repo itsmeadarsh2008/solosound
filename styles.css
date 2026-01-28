@@ -1,3 +1,43 @@
+# Hero greeting styles
+#home-hero {
+    padding: 3rem 0 2rem 2rem;
+    text-align: left;
+    display: block;
+}
+.hero-greeting {
+    font-family: 'Righteous', cursive !important;
+    font-size: 3.5rem;
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 0.5rem;
+    color: var(--primary, #fff);
+    text-align: left;
+    letter-spacing: -1px;
+}
+.hero-greeting-sub {
+    font-family: 'Roboto', Arial, sans-serif !important;
+    font-size: 1.35rem;
+    font-weight: 400;
+    color: var(--muted-foreground, #aaa);
+    margin-bottom: 0.5rem;
+    text-align: left;
+    max-width: 600px;
+}
+.home-recommended-section {
+    margin-top: 1.5rem;
+}
+* {
+    font-family: 'Roboto', Arial, sans-serif !important;
+}
+
+/* Headings use Righteous for brand look */
+h1, h2, h3, h4, h5, h6, .section-title {
+    font-family: 'Righteous', cursive;
+    letter-spacing: -0.2px;
+}
+#page-library {
+    background-color: var(--background);
+}
 /* stylelint-disable no-descending-specificity */
 :root {
     color-scheme: light dark;
@@ -10,56 +50,61 @@
     --spacing-2xl: 3rem;
     --radius: 0.5rem;
     --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    --shadow-sm: 0 4px 12px rgb(0, 0, 0, 0.15);
-    --shadow-md: 0 6px 16px rgb(0, 0, 0, 0.2);
-    --shadow-lg: 0 10px 30px rgb(0, 0, 0, 0.5);
-    --shadow-xl: 0 20px 60px rgb(0, 0, 0, 0.8);
+    --shadow-sm: 0 3px 10px rgba(0, 0, 0, 0.10);
+    --shadow-md: 0 6px 18px rgba(0, 0, 0, 0.14);
+    --shadow-lg: 0 8px 20px rgba(0, 0, 0, 0.22);
+    --shadow-xl: 0 12px 36px rgba(0, 0, 0, 0.30);
     --cover-filter: blur(50px) brightness(0.4);
     --player-bar-height-desktop: 90px;
     --player-bar-height-mobile: 130px;
+    /* Sidebar sizing */
+    --sidebar-width: 210px;
+    --sidebar-collapsed-width: 120px; /* increased to allow a compact title + active pill */
 }
 
 :root[data-theme='monochrome'] {
-    color-scheme: dark;
+    /* Switch monochrome theme to a light variant as requested */
+    color-scheme: light;
 
-    --background: #000;
-    --foreground: #fafafa;
-    --card: #111;
-    --card-foreground: #fafafa;
-    --primary: #fafafa;
-    --primary-foreground: #111;
-    --secondary: #27272a;
-    --secondary-foreground: #fafafa;
-    --muted: #27272a;
-    --muted-foreground: #a1a1aa;
-    --border: #27272a;
-    --input: #27272a;
-    --ring: #fafafa;
-    --highlight: #fff;
-    --highlight-rgb: 255, 255, 255;
-    --active-highlight: var(--highlight);
-    --explicit-badge: #fafafa;
+    --background: #ffffff;
+    --foreground: #0b1220; /* near-black for text */
+    --card: #ffffff;
+    --card-foreground: #0b1220;
+    --primary: #d6b57f; /* tan/golden accent */
+    --primary-foreground: #0b1220; /* dark foreground for contrast on tan */
+    --secondary: #f3f4f6;
+    --secondary-foreground: #0b1220;
+    --muted: #f7f7f8;
+    --muted-foreground: #6b7280; /* softer gray for muted text */
+    --border: #e6e6e9;
+    --input: #f3f4f6;
+    --ring: #d6b57f;
+    --highlight: #d6b57f;
+    --highlight-rgb: 214, 181, 127;
+    --active-highlight: #d6b57f;
+    --explicit-badge: #7a2f2f;
 }
 
 :root[data-theme='dark'] {
     color-scheme: dark;
 
-    --background: #0a0a0a;
-    --foreground: #ededed;
-    --card: #1a1a1a;
-    --card-foreground: #ededed;
-    --primary: #3b82f6;
-    --primary-foreground: #fff;
-    --secondary: #2a2a2a;
-    --secondary-foreground: #ededed;
-    --muted: #2a2a2a;
-    --muted-foreground: #a0a0a0;
-    --border: #2a2a2a;
-    --input: #2a2a2a;
-    --ring: #3b82f6;
-    --highlight: #3b82f6;
-    --highlight-rgb: 59, 130, 246;
-    --active-highlight: #3b82f6;
+    --background: #0d0d0e; /* slightly lighter for less eye strain */
+    --foreground: #e9e9e9; /* softer white */
+    --card: #131313; /* subtle lift from pitch black */
+    --card-foreground: #e9e9e9;
+    /* Unified tan accent (match screenshots) */
+    --primary: #d6b57f; /* tan/golden accent */
+    --primary-foreground: #0b1220; /* dark foreground for contrast on tan */
+    --secondary: #232323;
+    --secondary-foreground: #e9e9e9;
+    --muted: #232323;
+    --muted-foreground: #9a9a9a; /* softer muted tone */
+    --border: #232323;
+    --input: #232323;
+    --ring: #d6b57f; /* derived from primary */
+    --highlight: #d6b57f;
+    --highlight-rgb: 214, 181, 127;
+    --active-highlight: #d6b57f;
     --explicit-badge: #750a0a;
 }
 
@@ -259,7 +304,7 @@ html {
 body {
     background-color: var(--background);
     color: var(--foreground);
-    font-family: Inter, sans-serif;
+    font-family: Roboto, sans-serif;
     overflow: hidden;
     transition:
         background-color 0.3s ease,
@@ -276,9 +321,10 @@ img {
     border: none;
 }
 
-a {
-    color: inherit;
-    text-decoration: none;
+* {
+    font-family: Roboto, sans-serif !important;
+    transition: none !important;
+    animation: none !important;
 }
 
 .text-link {
@@ -294,6 +340,7 @@ a {
 kbd {
     background-color: var(--secondary);
     border: 1px solid var(--border);
+    border-width: 1px;
     border-radius: 4px;
     padding: 0.25rem 0.5rem;
     font-size: 0.85rem;
@@ -307,7 +354,7 @@ kbd {
     height: 100dvh;
     grid-template:
         'sidebar main' 1fr
-        'player player' auto / 210px 1fr;
+        'player player' auto / var(--sidebar-width, 210px) 1fr;
 }
 
 .sidebar {
@@ -317,9 +364,78 @@ kbd {
     padding: 1.25rem;
     display: flex;
     flex-direction: column;
-    gap: 2rem;
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    gap: 1.25rem;
+    transition: width 0.25s ease, padding 0.25s ease, background-color 0.2s ease;
+    width: var(--sidebar-width);
+    box-sizing: border-box;
+    min-height: 100vh;
 }
+
+/* Collapsed sidebar driven by .sidebar-collapsed on body */
+body.sidebar-collapsed {
+    --sidebar-width: var(--sidebar-collapsed-width);
+}
+
+body.sidebar-collapsed .sidebar {
+    padding: 0.75rem;
+}
+
+/* Keep the app title visible (but compact) */
+body.sidebar-collapsed .sidebar-logo {
+    justify-content: flex-start;
+    gap: 0.5rem;
+}
+
+body.sidebar-collapsed .sidebar-logo span {
+    display: inline-block;
+    font-size: 0.95rem;
+    max-width: calc(var(--sidebar-width) - 56px);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    opacity: 1;
+}
+
+/* Default: hide nav labels to save space */
+body.sidebar-collapsed .sidebar-nav .nav-item a {
+    justify-content: center;
+    padding: 0.55rem;
+    position: relative;
+}
+
+body.sidebar-collapsed .sidebar-nav .nav-item a span {
+    display: none;
+}
+
+/* Show label for active item as an inline pill */
+body.sidebar-collapsed .sidebar-nav .nav-item a.active {
+    justify-content: flex-start;
+    padding-left: 10px;
+    padding-right: 12px;
+    background: var(--primary);
+    color: var(--primary-foreground);
+    border-radius: 20px;
+}
+
+body.sidebar-collapsed .sidebar-nav .nav-item a.active span {
+    display: inline-block;
+    font-weight: 700;
+    margin-left: 8px;
+}
+
+/* Decorative left indicator bar to match reference */
+body.sidebar-collapsed .sidebar-nav .nav-item a.active::before {
+    content: '';
+    position: absolute;
+    left: -8px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 8px;
+    height: 36px;
+    border-radius: 6px;
+    background: var(--primary);
+}
+
 
 .sidebar-content {
     display: flex;
@@ -384,6 +500,24 @@ kbd {
     mask-image: linear-gradient(to bottom, rgb(0, 0, 0, 1) 0%, rgb(0, 0, 0, 0) 100%);
 }
 
+/* When sidebar is collapsed, show tooltips on hover */
+body.sidebar-collapsed .sidebar-nav .nav-item a:hover::after {
+    content: attr(data-label);
+    position: absolute;
+    left: calc(var(--sidebar-width) + 8px);
+    top: 50%;
+    transform: translateY(-50%);
+    background: var(--card);
+    color: var(--card-foreground);
+    padding: 6px 10px;
+    border-radius: 8px;
+    white-space: nowrap;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.4);
+    z-index: 2200;
+    font-size: 0.9rem;
+}
+
+
 .now-playing-bar {
     grid-area: player;
     padding: var(--spacing-sm) var(--spacing-md);
@@ -414,15 +548,15 @@ kbd {
 .sidebar-logo {
     display: flex;
     align-items: center;
-    gap: 6px;
-    font-size: 1.1rem;
-    font-weight: 600;
-    margin-bottom: 1rem;
+    gap: 8px;
+    font-size: 1.05rem;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
 }
 
 .sidebar-logo .app-logo {
-    width: 15px;
-    height: 15px;
+    width: 20px;
+    height: 20px;
     flex-shrink: 0;
 }
 
@@ -431,6 +565,7 @@ kbd {
     overflow: hidden;
     text-overflow: ellipsis;
     min-width: 0;
+    transition: opacity 0.2s ease;
 }
 
 #sidebar-toggle {
@@ -442,16 +577,107 @@ kbd {
     list-style: none;
 }
 
+.sidebar-logo {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    flex-direction: column; /* stack title above nav */
+}
+
+.sidebar-logo .sidebar-title {
+    font-family: 'Righteous', cursive;
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: var(--foreground);
+    margin-left: 6px;
+}
+
+.sidebar-logo .app-logo {
+    width: 32px;
+    height: 32px;
+    display: none; /* hidden when using text logo */
+    flex-shrink: 0;
+    padding: 6px;
+    box-sizing: content-box;
+    border-radius: 6px;
+    background: color-mix(in srgb, var(--card) 85%, transparent);
+    color: var(--primary-foreground); /* icon fills with currentColor */
+}
+
+.sidebar-logo .app-logo svg, .sidebar-logo .app-logo g { /* ensure inner shapes inherit color */
+    fill: currentColor !important;
+}
+
 .sidebar-nav .nav-item a {
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    padding: 0.75rem;
-    border-radius: var(--radius);
+    padding: 0.65rem 0.75rem;
+    border-radius: 10px;
     color: var(--muted-foreground);
-    font-weight: 500;
-    transition: all var(--transition);
+    font-weight: 600;
+    transition: background-color 0.18s ease, color 0.18s ease, transform 0.12s ease;
     cursor: pointer;
+    text-decoration: none;
+    position: relative; /* for tooltips */
+}
+
+.sidebar-nav .nav-item a svg,
+.sidebar-nav .nav-item a .icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    display: block;
+    overflow: visible;
+}
+
+.sidebar-nav .nav-item a span {
+    flex: 1;
+    text-decoration: none;
+}
+
+/* Make sure nav icons are centered and not clipped */
+.sidebar-nav .nav-item a svg,
+.sidebar-nav .nav-item a .icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    display: block;
+    overflow: visible;
+}
+
+/* Active indicator */
+.sidebar-nav .nav-item a.active::before {
+    content: '';
+    position: absolute;
+    left: -8px;
+    width: 6px;
+    height: 80%;
+    top: 10%;
+    border-radius: 4px;
+    background: var(--primary);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+}
+
+body.sidebar-collapsed .sidebar-nav .nav-item a.active::before {
+    /* Use a vertical pill indicator when collapsed so it aligns with the active pill */
+    left: -8px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 8px;
+    height: 36px;
+    border-radius: 6px;
+    box-shadow: none;
+    background: var(--primary);
+}
+
+.sidebar-nav .nav-item a:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--primary) 30%, transparent);
+    outline-offset: 2px;
+}
+
+.sidebar-nav .nav-item a:hover {
+    transform: translateX(3px);
 }
 
 .search-bar svg.search-icon {
@@ -466,13 +692,14 @@ kbd {
 }
 
 .sidebar-nav .nav-item a:hover {
-    background-color: var(--secondary);
+    background-color: color-mix(in srgb, var(--secondary) 70%, transparent);
     color: var(--foreground);
 }
 
 .sidebar-nav .nav-item a.active {
     background-color: var(--primary);
     color: var(--primary-foreground);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--primary-foreground) 12%, transparent);
 }
 
 .sidebar-nav .nav-item a svg {
@@ -489,6 +716,126 @@ kbd {
     z-index: 2150;
     backdrop-filter: blur(2px);
 }
+
+/* compact layout details */
+.sidebar .nav-item .nav-badge {
+    margin-left: 6px;
+    background: color-mix(in srgb, var(--card) 80%, transparent);
+    border-radius: 6px;
+    padding: 2px 6px;
+    font-size: 0.65rem;
+    color: var(--muted-foreground);
+}
+
+/* small track like button (compact) */
+.track-like-mini {
+    background: transparent;
+    border: none;
+    color: var(--muted-foreground);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    margin-left: 8px;
+    transition: color 0.12s ease, background 0.12s ease;
+}
+.track-like-mini:hover {
+    color: var(--foreground);
+    background: rgba(255,255,255,0.03);
+}
+.track-like-mini .heart-icon {
+    width: 18px;
+    height: 18px;
+}
+
+/* align track actions to the right and allow room for the like button */
+.hide-track-durations .track-item {
+    grid-template-columns: 40px 1fr 72px;
+}
+
+.hide-track-durations .track-item-duration {
+    display: none;
+}
+
+.track-item-actions .track-like-mini {
+    margin-left: 8px;
+}
+
+
+
+/* Normalize icons: make SVGs consistent */
+svg {
+    display: inline-block;
+    vertical-align: middle;
+}
+svg[width][height] {
+    width: 20px;
+    height: 20px;
+}
+svg path, svg circle, svg rect {
+    stroke: currentColor;
+    fill: none;
+}
+
+/* Icon placeholders (SVG icons via Feather) */
+.icon {
+    width: 20px;
+    height: 20px;
+    display: inline-block;
+    vertical-align: middle;
+    line-height: 1;
+}
+
+/* Ensure inserted SVGs fill the placeholder size */
+.icon svg {
+    width: 100%;
+    height: 100%;
+    display: block; /* avoid inline baseline clipping */
+    overflow: visible; /* allow strokes to render fully */
+    fill: currentColor; /* filled icons follow text color */
+    stroke: none; /* ensure filled look */
+}
+
+/* Slightly smaller in header */
+.header-actions .icon {
+    width: 18px;
+    height: 18px;
+}
+
+/* Emphasize active tab icons (favorites row) */
+.search-tab .icon {
+    width: 20px;
+    height: 20px;
+}
+.search-tab.active .icon {
+    width: 24px; /* slightly smaller for less emphasis */
+    height: 24px;
+}
+
+/* Ensure filled icons keep consistent color with labels */
+.search-tab .tab-label,
+.search-tab .icon,
+.sidebar-nav .nav-item a .icon {
+    color: var(--muted-foreground);
+    opacity: 0.95;
+}
+.search-tab.active .tab-label,
+.search-tab.active .icon,
+.sidebar-nav .nav-item a.active .icon {
+    color: var(--foreground);
+    opacity: 1;
+}
+
+/* Elegant mode: larger radius, softer shadows */
+body.elegant-mode {
+    --radius: 12px;
+    --shadow-md: 0 10px 30px rgba(0,0,0,0.25);
+}
+
+/* Icon style: filled vs outline */
+
 
 .main-header {
     display: flex;
@@ -753,32 +1100,139 @@ input[type='search']::-webkit-search-cancel-button {
     margin-bottom: var(--spacing-lg);
 }
 
-.search-tabs {
+..search-tabs {
     display: flex;
-    gap: var(--spacing-xs);
-    margin-bottom: var(--spacing-lg);
-    border-bottom: 1px solid var(--border);
+    gap: 1rem;
+    align-items: center;
+    margin: 1.2rem 0 1.5rem 0;
+    overflow-x: auto;
+    padding-bottom: 0.25rem;
 }
 
 .search-tab {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
     background: transparent;
     border: none;
     color: var(--muted-foreground);
-    padding: var(--spacing-sm) var(--spacing-lg);
+    padding: 0.35rem 0.5rem;
     cursor: pointer;
-    font-size: 1rem;
-    font-weight: 500;
-    border-bottom: 2px solid transparent;
-    transition: all var(--transition);
+    font-size: 0.88rem;
+    font-weight: 600;
+    border-radius: 8px;
+    transition: background-color 0.12s ease, color 0.12s ease, transform 0.08s ease;
+    min-width: 56px;
 }
+
+.search-tab .icon { width: 22px; height: 22px; display: block; fill: currentColor; }
+
+.search-tab .tab-label { font-size: 0.82rem; display: block; margin-top: 2px; }
 
 .search-tab:hover {
     color: var(--foreground);
+    transform: translateY(-2px);
 }
 
 .search-tab.active {
     color: var(--foreground);
-    border-bottom-color: var(--highlight);
+    background: transparent; /* keep the UI clean; emphasize with a small underline */
+    box-shadow: none;
+    border-radius: 0;
+}
+
+/* small decorative emphasis bar for active tab */
+.search-tab.active::after {
+    content: '';
+    display: block;
+    width: 28%;
+    height: 4px;
+    background: var(--primary);
+    border-radius: 6px;
+    margin-top: 6px;
+}
+
+
+/* Playlists header (redesigned for clarity) */
+.library-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.favorites-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.muted.small {
+    color: var(--muted-foreground);
+    font-size: 0.92rem;
+    margin: 0;
+}
+
+.library-header .title-block {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.btn-text { display: inline-block; }
+.btn-create .btn-text { display: inline-block; }
+
+@media (max-width: 520px) {
+    /* conserve horizontal space on tiny screens */
+    .btn-create .btn-text { display: none; }
+    .search-tabs { gap: 0.6rem; }
+    .search-tab .tab-label { display: none; }
+}
+
+.library-header h2 {
+    margin: 0;
+    font-size: 1.6rem;
+}
+
+.library-header .controls {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+/* primary create button: gentler, consistent sizing */
+.library-header .btn-create {
+    border-radius: 999px;
+    padding: 0.6rem 1.1rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    background-color: var(--primary);
+    color: var(--primary-foreground);
+    box-shadow: 0 6px 14px rgba(0,0,0,0.08);
+}
+
+.library-header .btn-create .icon {
+    width: 18px;
+    height: 18px;
+}
+
+.library-header .btn-secondary {
+    padding: 0.5rem 0.9rem;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--card) 90%, transparent);
+    color: var(--muted-foreground);
+    border: 1px solid color-mix(in srgb, var(--foreground) 3%, transparent);
+}
+
+
+/* Accessible focus states */
+.btn-primary:focus-visible, .btn-secondary:focus-visible, .search-tab:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--primary) 40%, transparent);
+    outline-offset: 2px;
 }
 
 .search-tab-content {
@@ -798,6 +1252,7 @@ input[type='search']::-webkit-search-cancel-button {
 
 .card {
     display: block;
+    position: relative;
     background-color: var(--card);
     border-radius: var(--radius);
     padding: 1rem;
@@ -816,52 +1271,85 @@ input[type='search']::-webkit-search-cancel-button {
 }
 
 .card-like-btn {
+    position: relative;
+    left: auto;
+    bottom: auto;
+    right: auto;
+    top: auto;
+    opacity: 1;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+.card-menu-btn {
     position: absolute;
-    right: 2%;
-    top: 2%;
+    right: 12px;
+    top: 12px;
+}
+
+.card-actions {
+    position: absolute;
+    right: 12px;
+    top: 12px;
+    transform: none;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    z-index: 15;
 }
 
 .card-menu-btn {
-    position: absolute;
-    left: 2%;
-    top: 2%;
+    position: relative;
+    right: auto;
+    top: auto;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    background: rgba(0,0,0,0.35);
+    color: var(--muted-foreground);
+    border: none;
 }
+
+.card-menu-btn:hover { background: rgba(0,0,0,0.6); color: var(--foreground); }
 
 .card-like-btn,
 .card-menu-btn {
-    background: rgb(0, 0, 0, 0.4) !important;
+    background: rgba(0, 0, 0, 0.35) !important;
     backdrop-filter: blur(8px);
-    border-radius: 50% !important;
-    width: 32px !important;
-    height: 32px !important;
-    padding: 0 !important;
+    border-radius: 12px !important;
+    min-width: 36px !important;
+    height: 28px !important;
+    padding: 0 8px !important;
     display: flex !important;
     align-items: center;
     justify-content: center;
-    opacity: 0;
-    transform: scale(0.8);
-    transition: all 0.2s ease !important;
+    opacity: 1;
+    transform: none;
+    transition: background 0.15s ease, transform 0.12s ease !important;
     z-index: 10;
     color: white !important;
     border: none !important;
     cursor: pointer;
 }
 
-.card:hover .card-like-btn,
-.card:hover .card-menu-btn,
-.card-like-btn.active {
-    opacity: 1;
-    transform: scale(1);
+.card-like-btn .heart-icon {
+    margin-left: 6px;
 }
 
-.card-like-btn:hover,
-.card-menu-btn:hover {
-    background: rgb(0, 0, 0, 0.7) !important;
-    transform: scale(1.1) !important;
+.card-menu-btn:hover,
+.card-like-btn:hover {
+    background: rgba(0, 0, 0, 0.6) !important;
+    transform: translateY(-2px) !important;
 }
 
 .card-like-btn.active {
-    color: #ef4444 !important;
+    color: #ff6b6b !important;
+    background: rgba(255, 107, 107, 0.12) !important;
+    box-shadow: 0 4px 18px rgba(255,107,107,0.08);
 }
 
 .edit-playlist-btn,
@@ -930,7 +1418,7 @@ input[type='search']::-webkit-search-cancel-button {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    border-radius: 0;
+    border-radius: var(--radius);
     margin: 0;
 }
 
@@ -954,12 +1442,14 @@ input[type='search']::-webkit-search-cancel-button {
     right: 0.5rem;
 }
 
-.card-title {
-    font-weight: 600;
-    margin-bottom: 0.25rem;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+/* 3-image collage layout */
+.card-collage.items-3 {
+    grid-template-columns: 2fr 1fr;
+    grid-template-rows: 1fr 1fr;
+}
+.card-collage.items-3 img:first-child {
+    grid-row: 1 / span 2;
+    height: 100%;
 }
 
 .card-subtitle {
@@ -1359,7 +1849,7 @@ input[type='search']::-webkit-search-cancel-button {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    border-radius: 0;
+    border-radius: var(--radius);
     margin: 0;
     background-color: var(--muted);
 }
@@ -1386,6 +1876,16 @@ input[type='search']::-webkit-search-cancel-button {
     gap: 1rem;
     flex-wrap: wrap;
     overflow-wrap: break-word;
+    font-family: 'Righteous', cursive;
+}
+
+
+.sidebar-logo span {
+    font-family: 'Righteous', cursive !important;
+}
+
+.detail-header-info .title, .detail-header-info .title.long-title, .detail-header-info .title.very-long-title {
+    font-family: 'Righteous', cursive !important;
 }
 
 .detail-header-info .title.long-title {
@@ -1448,23 +1948,115 @@ input[type='search']::-webkit-search-cancel-button {
     background-color: var(--primary);
     color: var(--primary-foreground);
     border: none;
-    border-radius: 2rem;
+    border-radius: var(--radius);
     font-weight: 600;
     font-size: 0.95rem;
     cursor: pointer;
-    transition: all var(--transition);
+    transition: none;
     box-shadow: var(--shadow-sm);
     -webkit-tap-highlight-color: transparent;
 }
 
+/* Create button variant */
+.btn-create {
+    background-color: var(--primary);
+    color: var(--primary-foreground);
+    box-shadow: 0 6px 14px rgba(0,0,0,0.12); /* gentler shadow */
+    border: 1px solid color-mix(in srgb, var(--primary-foreground) 4%, transparent);
+}
+.btn-create:hover { filter: brightness(1.02); transform: translateY(-1px); box-shadow: 0 8px 20px rgba(0,0,0,0.14); }
+
+/* Quality badges */
+.quality-badge-wrapper { display: inline-flex; gap: 0.45rem; align-items: center; margin-left: 0.5rem; }
+.quality-badge { font-weight: 700; font-size: 0.72rem; padding: 0.18rem 0.5rem; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; text-transform: uppercase; letter-spacing: 0.3px; }
+.quality-hires { background: var(--primary); color: var(--primary-foreground); }
+.quality-format { /* FLAC / format badge */ background: rgba(0,0,0,0.72); color: #fff; border-radius: 10px; font-weight: 700; }
+.quality-lossless { background: rgba(0,0,0,0.72); color: #fff; border-radius: 10px; }
+.quality-high { background: transparent; color: var(--foreground); border-radius: 8px; padding: 0.12rem 0.4rem; font-weight: 600; /* removed explicit border per request */ }
+.quality-low { background: transparent; color: var(--muted-foreground); border-radius: 8px; padding: 0.12rem 0.36rem; font-weight: 600; }
+.quality-details { display: inline-flex; gap: 0.3rem; align-items: center; margin-left: 0.4rem; }
+.quality-detail { font-size: 0.72rem; padding: 0.12rem 0.28rem; border-radius: 6px; background: rgba(255,255,255,0.02); color: var(--muted-foreground); font-weight: 600; }
+
+/* Ensure track title and badges align */
+.track-item-details .title { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.track-item-details .title .quality-badge-wrapper { margin-left: 0.4rem; }
+
+/* Album/track detail header badges */
+.detail-header .title { display: flex; align-items: center; gap: 0.6rem; }
+.detail-header .title .quality-badge-wrapper { margin-left: 0; }
+.detail-header .title .quality-badge { font-size: 0.82rem; padding: 0.22rem 0.5rem; }
+.detail-header .title { display: flex; align-items: center; gap: 0.6rem; }
+.detail-header .title .quality-badge-wrapper { margin-left: 0; }
+.detail-header .title .quality-badge { font-size: 0.82rem; padding: 0.22rem 0.5rem; }
+.detail-header .title .quality-detail { font-size: 0.88rem; padding: 0.18rem 0.5rem; background: rgba(255,255,255,0.03); color: var(--foreground); border-radius: 10px; font-weight: 700; }
+
+/* Now Playing layout: center HD badge below title and show inline quality details */
+.now-playing-bar .title { display: flex; flex-direction: column; align-items: center; gap: 0.45rem; text-align: center; }
+.now-title-text { font-size: 1.6rem; font-weight: 800; }
+.now-quality-row { display: flex; flex-direction: column; align-items: center; gap: 0.25rem; }
+.now-hd-badge .quality-badge { font-size: 0.9rem; padding: 0.24rem 0.6rem; border-radius: 12px; }
+.now-quality-details { display: flex; gap: 0.4rem; align-items: center; }
+.quality-details-inline { font-size: 0.92rem; color: var(--muted-foreground); font-weight: 700; }
+.quality-format-inline { font-size: 0.82rem; color: var(--foreground); background: rgba(255,255,255,0.03); padding: 0.08rem 0.4rem; border-radius: 8px; font-weight: 700; }
+
+.now-playing-bar .title .quality-detail { font-size: 0.92rem; padding: 0.2rem 0.6rem; background: rgba(255,255,255,0.04); color: var(--foreground); border-radius: 12px; font-weight: 800; }
+
+.quality-format-detail { text-transform: uppercase; letter-spacing: 0.6px; }
+
+
+
+/* Compact mode: densify layout for smaller UI */
+body.compact-mode .track-list .track-item { padding: 6px 8px; }
+body.compact-mode .card-grid .card { padding: 8px; }
+body.compact-mode .sidebar { padding: 10px; }
+body.compact-mode .section-title { font-size: 1.15rem; margin-bottom: 0.6rem; }
+body.compact-mode .hero-greeting { font-size: 2.6rem; }
+body.compact-mode .library-header { margin-bottom: 0.8rem; }
+body.compact-mode .search-tabs { margin: 0.8rem 0 1rem 0; gap: 0.6rem; }
+body.compact-mode .search-tab { min-width: 48px; padding: 0.28rem 0.45rem; }
+
+
+/* Ensure button icons are aligned with text */
+.btn-primary .icon,
+.btn-secondary .icon {
+    width: 18px;
+    height: 18px;
+    margin-right: 0.6rem;
+    display: inline-block;
+    vertical-align: middle;
+    flex-shrink: 0;
+    shape-rendering: geometricPrecision;
+}
+
+/* Icon-only button variant (no text) */
+.btn-icon-only {
+    padding: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+}
+.btn-icon-only .icon {
+    margin-right: 0;
+    width: 16px;
+    height: 16px;
+    display: block;
+}
+
+/* Special small tweak for header folder button alignment */
+#my-playlists .btn-secondary .icon,
+#page-library .btn-secondary .icon,
+.library-header .btn-secondary .icon {
+    margin-top: 0; /* adjust to align with icon-only buttons */
+}
+
+
 .btn-primary:hover {
-    transform: scale(1.05);
-    box-shadow: var(--shadow-md);
-    filter: brightness(0.9);
+    /* No hover transform or shadow for precision */
 }
 
 .btn-primary:active {
-    transform: scale(0.98);
+    /* No active transform for precision */
 }
 
 .btn-primary:disabled {
@@ -1479,22 +2071,21 @@ input[type='search']::-webkit-search-cancel-button {
 
 .btn-secondary {
     padding: 0.5rem 1rem;
-    background-color: var(--secondary);
-    color: var(--foreground);
-    border: none;
+    background-color: color-mix(in srgb, var(--card) 78%, transparent); /* subtle, low-contrast */
+    color: var(--muted-foreground);
+    border: 1px solid color-mix(in srgb, var(--foreground) 4%, transparent);
     border-radius: var(--radius);
     cursor: pointer;
     font-weight: 500;
-    transition: all var(--transition);
+    transition: none;
 }
 
 .btn-secondary:hover {
-    background-color: var(--muted);
-    filter: brightness(1.1);
+    background-color: color-mix(in srgb, var(--card) 70%, transparent);
 }
 
 .btn-secondary:active {
-    transform: scale(0.98);
+    /* No active transform for precision */
 }
 
 .btn-secondary:disabled {
@@ -3193,7 +3784,7 @@ input:checked + .slider::before {
 
 .now-playing-bar .artist .artist-link:hover {
     color: var(--highlight);
-    text-decoration: underline;
+    text-decoration: none;
 }
 
 /* Updated Volume Controls Layout */
@@ -3726,6 +4317,26 @@ img[src=''] {
     .card-grid {
         grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
         gap: var(--spacing-md);
+    }
+
+    /* Library list view - makes playlists/folders render as a vertical list */
+    #page-library.list-view .card-grid {
+        display: block;
+    }
+    #page-library.list-view .card-grid .card {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-md);
+        width: 100%;
+        margin-bottom: var(--spacing-md);
+    }
+    #page-library.list-view .card-grid .card .card-cover {
+        width: 64px;
+        height: 64px;
+        flex: 0 0 64px;
+    }
+    #page-library.list-view .card-grid .card .card-body {
+        flex: 1 1 auto;
     }
 
     .detail-header-info .title {

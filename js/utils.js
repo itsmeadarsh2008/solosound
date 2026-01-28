@@ -18,6 +18,12 @@ export const AUDIO_QUALITIES = {
 
 export const QUALITY_PRIORITY = ['HI_RES_LOSSLESS', 'LOSSLESS', 'HIGH', 'LOW'];
 
+// Quality orders tailored to use-cases
+// Streaming: prefer stable LOSSLESS (16-bit FLAC) for lower failure rates in browsers, then HI-RES when available.
+export const STREAM_QUALITY_PRIORITY = ['LOSSLESS', 'HI_RES_LOSSLESS', 'HIGH', 'LOW'];
+// Download: prefer the highest fidelity available for downloads (HI_RES first)
+export const DOWNLOAD_QUALITY_PRIORITY = ['HI_RES_LOSSLESS', 'LOSSLESS', 'HIGH', 'LOW'];
+
 export const QUALITY_TOKENS = {
     HI_RES_LOSSLESS: [
         'HI_RES_LOSSLESS',
@@ -170,11 +176,123 @@ export const normalizeQualityToken = (value) => {
 export const createQualityBadgeHTML = (track) => {
     if (!qualityBadgeSettings.isEnabled()) return '';
 
-    const quality = deriveTrackQuality(track);
-    if (quality === 'HI_RES_LOSSLESS') {
-        return '<span class="quality-badge quality-hires" title="Hi-Res Lossless">HD</span>';
+    // Determine quality token: prefer playback override token then derived
+    let quality = track && track.playbackQualityToken ? track.playbackQualityToken : null;
+    let rawQuality = null;
+    if (!quality && track && track.playbackQuality) {
+        rawQuality = track.playbackQuality;
+        quality = normalizeQualityToken(rawQuality);
     }
-    return '';
+    if (!quality) quality = deriveTrackQuality(track);
+
+    // If the determined quality is LOW, require explicit evidence (bitrate/tag) before showing it
+    if (quality === 'LOW') {
+        const explicitLow = (() => {
+            if (track?.info) {
+                const br = Number(track.info.bitrate || track.info.bitrate_kbps || 0) || 0;
+                const brK = br > 1000 ? Math.round(br / 1000) : br;
+                if (brK && brK < 160) return true;
+            }
+            const tags = [...(track.mediaMetadata?.tags || []), ...(track.album?.mediaMetadata?.tags || [])];
+            // Match explicit low indicators (e.g. "low", "96 kbps") but avoid matching sample-rate strings like "96 kHz"
+            return tags.some((t) => typeof t === 'string' && /\b(low|96\s?(kbps|kbit))\b/i.test(t));
+        })();
+        if (!explicitLow) {
+            // No solid evidence — treat as unknown
+            quality = null;
+        }
+    }
+
+    // If no evidence of quality, do not show a badge
+    if (!quality) return '';
+
+    // Extract structured metadata
+    let bitDepth = null;
+    let sampleRate = null;
+
+    if (track && track.info) {
+        const bit = track.info.bitDepth || track.info.bitsPerSample || track.info.bit_depth;
+        const sr = track.info.sampleRate || track.info.samplerate || track.info.sample_rate;
+        if (bit) bitDepth = String(bit) + '-bit';
+        if (sr) sampleRate = (Number(sr) >= 1000 ? Math.round(Number(sr) / 1000) + 'kHz' : String(sr) + 'Hz');
+    }
+
+    // Fallback to parsing tags when structured info is missing
+    if (!bitDepth || !sampleRate) {
+        const tags = [...(track.mediaMetadata?.tags || []), ...(track.album?.mediaMetadata?.tags || [])];
+        for (const t of tags) {
+            if (!t || typeof t !== 'string') continue;
+            if (!bitDepth) {
+                const bd = t.match(/(\d{2})\s?-?\s?bit/i);
+                if (bd) bitDepth = bd[1] + '-bit';
+            }
+            if (!sampleRate) {
+                const sr = t.match(/(\d{2,3})\s?k?hz/i);
+                if (sr) sampleRate = sr[1] + 'kHz';
+            }
+            const combo = t.match(/(\d{2})\s?-?\s?bit\D*(\d{2,3})\s?k?hz/i);
+            if (combo) {
+                bitDepth = combo[1] + '-bit';
+                sampleRate = combo[2] + 'kHz';
+            }
+            if (bitDepth && sampleRate) break;
+        }
+    }
+
+    const badges = [];
+
+    if (quality === 'HI_RES_LOSSLESS') {
+        // Keep the Hi-Res badge but remove the explicit FLAC badge (format is obvious). Format will appear in details.
+        badges.push('<span class="quality-badge quality-hires" title="Hi-Res Lossless">HD</span>');
+    } else if (quality === 'LOSSLESS') {
+        // No prominent format badge for LOSSLESS; details will show the format when available.
+    } else if (quality === 'HIGH') {
+        badges.push('<span class="quality-badge quality-high" title="High Quality (320kbps)">320</span>');
+    } else if (quality === 'LOW') {
+        // Only show LOW when explicit evidence exists (bitrate < 160kbps or tag)
+        const explicitLow = (() => {
+            if (track?.info) {
+                const br = Number(track.info.bitrate || track.info.bitrate_kbps || 0) || 0;
+                const brK = br > 1000 ? Math.round(br / 1000) : br;
+                if (brK && brK < 160) return true;
+            }
+            const tags = [...(track.mediaMetadata?.tags || []), ...(track.album?.mediaMetadata?.tags || [])];
+            // Match explicit low indicators (e.g. "low", "96 kbps") but avoid matching sample-rate strings like "96 kHz"
+            return tags.some((t) => typeof t === 'string' && /\b(low|96\s?(kbps|kbit))\b/i.test(t));
+        })();
+        if (explicitLow) badges.push('<span class="quality-badge quality-low" title="Low Quality">LOW</span>');
+    }
+
+    const detailParts = [];
+
+    // Detect container/codec label (e.g., FLAC, AAC) and include it as a detail chip instead of a dedicated badge
+    let formatLabel = null;
+    if (track && track.info) {
+        const code = String((track.info.codec || track.info.codecs || track.info.format || '') || '').toLowerCase();
+        if (/flac/.test(code) || (track.info.manifest && String(track.info.manifest).toLowerCase().includes('flac'))) formatLabel = 'FLAC';
+        else if (/mp4|aac|m4a/.test(code)) formatLabel = 'AAC';
+    }
+    if (!formatLabel) {
+        const tags = [...(track.mediaMetadata?.tags || []), ...(track.album?.mediaMetadata?.tags || [])];
+        for (const t of tags) {
+            if (!t || typeof t !== 'string') continue;
+            if (/flac/i.test(t)) {
+                formatLabel = 'FLAC';
+                break;
+            }
+            if (/aac|mp4|m4a/i.test(t)) {
+                formatLabel = 'AAC';
+                break;
+            }
+        }
+    }
+
+    if (formatLabel) detailParts.push(`<span class="quality-detail quality-format-detail" title="Format">${formatLabel}</span>`);
+
+    if (bitDepth) detailParts.push(`<span class="quality-detail" title="Bit depth">${bitDepth}</span>`);
+    if (sampleRate) detailParts.push(`<span class="quality-detail" title="Sample rate">${sampleRate}</span>`);
+
+    return `<span class="quality-badge-wrapper">${badges.join('')}<span class="quality-details">${detailParts.join('')}</span></span>`;
 };
 
 export const deriveQualityFromTags = (rawTags) => {
@@ -213,13 +331,47 @@ export const pickBestQuality = (candidates) => {
 export const deriveTrackQuality = (track) => {
     if (!track) return null;
 
+    // Prefer structured metadata when available
+    const info = track.info || {};
+    const codec = (info.codec || info.format || '').toString().toLowerCase();
+    const bitDepth = Number(info.bitDepth || info.bitsPerSample || info.bit_depth || 0) || 0;
+    const sampleRate = Number(info.sampleRate || info.samplerate || info.sample_rate || 0) || 0; // Hz
+    const bitrate = Number(info.bitrate || info.bitrate_kbps || 0) || 0; // if bitrate_kbps may be kbps
+
+    // Normalize bitrate if it's in kbps range (e.g. 320 or 320000)
+    let bitrateKbps = 0;
+    if (bitrate > 0) {
+        bitrateKbps = bitrate > 1000 ? Math.round(bitrate / 1000) : Math.round(bitrate);
+    }
+
+    // Heuristics:
+    // - 24-bit recordings or codec 'flac' combined with high sample rate -> HI_RES_LOSSLESS
+    if (bitDepth >= 24) return 'HI_RES_LOSSLESS';
+    if (codec.includes('flac') && (sampleRate >= 88200 || bitDepth >= 16)) return 'LOSSLESS';
+
+    // If sample rate is very high, prefer hi-res label
+    if (sampleRate >= 96000 && bitDepth >= 16) return 'HI_RES_LOSSLESS';
+
+    // Lossless detection
+    if (codec.includes('flac') || codec.includes('wav') || codec.includes('pcm')) return 'LOSSLESS';
+
+    // High quality lossy
+    if (bitrateKbps >= 300) return 'HIGH';
+
+    // Low quality explicit evidence
+    if (bitrateKbps > 0 && bitrateKbps < 160) return 'LOW';
+
+    // Fall back to tag-derived candidates if structured info inconclusive
     const candidates = [
         deriveQualityFromTags(track.mediaMetadata?.tags),
         deriveQualityFromTags(track.album?.mediaMetadata?.tags),
         normalizeQualityToken(track.audioQuality),
     ];
 
-    return pickBestQuality(candidates);
+    const picked = pickBestQuality(candidates);
+
+    // If still inconclusive, return null (no badge) rather than defaulting to LOW
+    return picked || null;
 };
 
 export const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -308,6 +460,98 @@ export const formatDuration = (seconds) => {
         return `${hours} hr ${minutes} min`;
     }
     return `${minutes} min`;
+};
+
+/**
+ * Create a compact details HTML string for bit-depth, sample-rate, and format.
+ * Returns an empty string when no details are available.
+ */
+export const createQualityDetailsHTML = (track) => {
+    if (!track) return '';
+
+    // Bit depth
+    let bitDepth = null;
+    let sampleRate = null;
+
+    if (track.info) {
+        const bit = track.info.bitDepth || track.info.bitsPerSample || track.info.bit_depth;
+        const sr = track.info.sampleRate || track.info.samplerate || track.info.sample_rate;
+        if (bit) bitDepth = String(bit) + '-bit';
+        if (sr) sampleRate = (Number(sr) >= 1000 ? Math.round(Number(sr) / 1000) + 'kHz' : String(sr) + 'Hz');
+    }
+
+    // Fallback to parsing tags when structured info is missing
+    if (!bitDepth || !sampleRate) {
+        const tags = [...(track.mediaMetadata?.tags || []), ...(track.album?.mediaMetadata?.tags || [])];
+        for (const t of tags) {
+            if (!t || typeof t !== 'string') continue;
+            if (!bitDepth) {
+                const bd = t.match(/(\d{2})\s?-?\s?bit/i);
+                if (bd) bitDepth = bd[1] + '-bit';
+            }
+            if (!sampleRate) {
+                const sr = t.match(/(\d{2,3})\s?k?hz/i);
+                if (sr) sampleRate = sr[1] + 'kHz';
+            }
+            const combo = t.match(/(\d{2})\s?-?\s?bit\D*(\d{2,3})\s?k?hz/i);
+            if (combo) {
+                bitDepth = combo[1] + '-bit';
+                sampleRate = combo[2] + 'kHz';
+            }
+            if (bitDepth && sampleRate) break;
+        }
+    }
+
+    // Format detection
+    let formatLabel = null;
+    if (track.info) {
+        const code = String((track.info.codec || track.info.codecs || track.info.format || '') || '').toLowerCase();
+        if (/flac/.test(code) || (track.info.manifest && String(track.info.manifest).toLowerCase().includes('flac'))) formatLabel = 'FLAC';
+        else if (/mp4|aac|m4a/.test(code)) formatLabel = 'AAC';
+    }
+    if (!formatLabel) {
+        const tags = [...(track.mediaMetadata?.tags || []), ...(track.album?.mediaMetadata?.tags || [])];
+        for (const t of tags) {
+            if (!t || typeof t !== 'string') continue;
+            if (/flac/i.test(t)) {
+                formatLabel = 'FLAC';
+                break;
+            }
+            if (/aac|mp4|m4a/i.test(t)) {
+                formatLabel = 'AAC';
+                break;
+            }
+        }
+    }
+
+    const parts = [];
+    if (bitDepth) parts.push(bitDepth);
+    if (sampleRate) parts.push(sampleRate);
+
+    if (!parts.length && !formatLabel) return '';
+
+    const combined = parts.join(' • ');
+
+    return `<div class="now-quality-details">${formatLabel ? `<span class="quality-format-inline">${formatLabel}</span>` : ''}${combined ? `<span class="quality-details-inline">${combined}</span>` : ''}</div>`;
+};
+
+/**
+ * Build the Now Playing title HTML: title + centered HD badge (if hi-res) + details line
+ */
+export const createNowPlayingTitleHTML = (track) => {
+    const title = escapeHtml(getTrackTitle(track));
+
+    // Determine quality token to decide if we should show centered HD badge
+    let token = null;
+    if (track && track.playbackQualityToken) token = track.playbackQualityToken;
+    else if (track && track.playbackQuality) token = normalizeQualityToken(track.playbackQuality);
+    else token = deriveTrackQuality(track);
+
+    const hdBadge = token === 'HI_RES_LOSSLESS' ? '<div class="now-hd-badge"><span class="quality-badge quality-hires" title="Hi-Res Lossless">HD</span></div>' : '';
+
+    const detailsHTML = createQualityDetailsHTML(track);
+
+    return `<div class="now-title-text">${title}</div><div class="now-quality-row">${hdBadge}${detailsHTML}</div>`;
 };
 
 const coverCache = new Map();

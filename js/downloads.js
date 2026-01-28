@@ -59,6 +59,91 @@ export function showNotification(message) {
     }, 1500);
 }
 
+// Persistent notification with an action button (e.g., Retry)
+const actionNotifications = new Map(); // key -> { element, remove }
+export function showActionNotification(message, actionText = 'Retry', actionHandler = null, options = {}) {
+    const container = createDownloadNotification();
+
+    // Try to dedupe using a key if provided
+    const key = options.key || message;
+    if (actionNotifications.has(key)) {
+        // Update timestamp or bring to top
+        const existing = actionNotifications.get(key);
+        if (existing && existing.element) {
+            // briefly highlight
+            existing.element.style.animation = 'none';
+            void existing.element.offsetWidth;
+            existing.element.style.animation = '';
+        }
+        return existing;
+    }
+
+    const notifEl = document.createElement('div');
+    notifEl.className = 'download-task action-task';
+
+    const content = document.createElement('div');
+    content.style.display = 'flex';
+    content.style.alignItems = 'center';
+    content.style.gap = '0.75rem';
+
+    const msg = document.createElement('div');
+    msg.style.flex = '1';
+    msg.style.minWidth = '0';
+    msg.innerHTML = message;
+
+    const actionBtn = document.createElement('button');
+    actionBtn.className = 'action-btn';
+    actionBtn.textContent = actionText;
+    actionBtn.style.background = 'transparent';
+    actionBtn.style.border = '1px solid rgba(255,255,255,0.06)';
+    actionBtn.style.color = 'var(--foreground)';
+    actionBtn.style.padding = '6px 10px';
+    actionBtn.style.borderRadius = '6px';
+    actionBtn.style.cursor = 'pointer';
+
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'close-btn';
+    closeBtn.innerHTML = '✕';
+    closeBtn.style.background = 'transparent';
+    closeBtn.style.border = 'none';
+    closeBtn.style.color = 'var(--muted-foreground)';
+    closeBtn.style.cursor = 'pointer';
+
+    content.appendChild(msg);
+    content.appendChild(actionBtn);
+    content.appendChild(closeBtn);
+
+    notifEl.appendChild(content);
+    container.appendChild(notifEl);
+
+    function remove() {
+        notifEl.style.animation = 'slide-out 0.3s ease forwards';
+        setTimeout(() => {
+            notifEl.remove();
+            actionNotifications.delete(key);
+        }, 300);
+    }
+
+    actionBtn.addEventListener('click', (e) => {
+        if (typeof actionHandler === 'function') actionHandler(e);
+        if (!options.persistent) remove();
+    });
+
+    closeBtn.addEventListener('click', () => remove());
+
+    const record = { element: notifEl, remove };
+    actionNotifications.set(key, record);
+
+    // Auto-remove after 22 seconds unless persistent
+    if (!options.persistent) {
+        setTimeout(() => {
+            if (actionNotifications.has(key)) record.remove();
+        }, 22000);
+    }
+
+    return record;
+}
+
 export function addDownloadTask(trackId, track, filename, api, abortController) {
     const container = createDownloadNotification();
 

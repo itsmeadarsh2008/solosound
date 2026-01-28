@@ -204,6 +204,16 @@ export class UIRenderer {
         const trackNumberHTML = `<div class="track-number">${showCover ? trackImageHTML : displayIndex}</div>`;
         const explicitBadge = hasExplicitContent(track) ? this.createExplicitBadge() : '';
         const qualityBadge = createQualityBadgeHTML(track);
+        // Detect whether the track already includes bit-depth / sample-rate details so we can lazily fetch them if missing
+        const hasQualityDetails = (() => {
+            if (track?.info) {
+                if (track.info.bitDepth || track.info.bitsPerSample || track.info.bit_depth) return true;
+                const sr = track.info.sampleRate || track.info.samplerate || track.info.sample_rate;
+                if (sr) return true;
+            }
+            const tags = [...(track.mediaMetadata?.tags || []), ...(track.album?.mediaMetadata?.tags || [])];
+            return tags.some((t) => typeof t === 'string' && (/\b\d{2}\s?-?\s?bit\b/i.test(t) || /\b\d{2,3}\s?kHz\b/i.test(t)));
+        })();
         const trackArtists = getTrackArtists(track);
         const trackTitle = getTrackTitle(track);
         const isCurrentTrack = this.player?.currentTrack?.id === track.id;
@@ -225,9 +235,6 @@ export class UIRenderer {
             ? ''
             : `
             <div class="track-actions-inline">
-                <button class="track-action-btn like-btn" data-action="toggle-like" title="Add to Liked">
-                    ${this.createHeartIcon(false)}
-                </button>
                 <button class="track-action-btn" data-action="play-next" title="Play Next">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M2 6h6" />
@@ -258,6 +265,9 @@ export class UIRenderer {
             <button class="track-menu-btn" type="button" title="More options" ${track.isLocal ? 'style="display:none"' : ''}>
                 ${SVG_MENU}
             </button>
+            <button class="like-btn track-like-mini" data-action="toggle-like" title="Like">
+                ${this.createHeartIcon(false)}
+            </button>
         `;
 
         return `
@@ -271,7 +281,8 @@ export class UIRenderer {
                         <div class="title">
                             ${escapeHtml(trackTitle)}
                             ${explicitBadge}
-                            ${qualityBadge}
+                            ${qualityBadge || `<span class="quality-badge-placeholder" data-track-id="${track.id}"></span>`}
+                            ${!hasQualityDetails ? `<span class="quality-detail-placeholder" data-track-id="${track.id}"></span>` : ''}
                         </div>
                         <div class="artist">${escapeHtml(trackArtists)}${yearDisplay}</div>
                     </div>
@@ -282,6 +293,119 @@ export class UIRenderer {
                 </div>
             </div>
         `;
+    }
+
+    async resolveQualityBadges() {
+        // Fill two kinds of placeholders non-blocking and deduped:
+        // 1) .quality-badge-placeholder -> replace with full badge HTML
+        // 2) .quality-detail-placeholder -> inject only the .quality-details fragment into existing badge wrapper
+        const badgePlaceholders = Array.from(document.querySelectorAll('.quality-badge-placeholder[data-track-id]'));
+        const detailPlaceholders = Array.from(document.querySelectorAll('.quality-detail-placeholder[data-track-id]'));
+
+        const seen = new Set();
+
+        // Replace full badge placeholders
+        for (const ph of badgePlaceholders) {
+            const id = ph.dataset.trackId;
+            if (!id || seen.has(id)) continue;
+            seen.add(id);
+            try {
+                const track = await this.api.getTrack(id);
+                if (!track) {
+                    ph.remove();
+                    continue;
+                }
+                const html = createQualityBadgeHTML(track);
+                if (html && html.length) ph.outerHTML = html;
+                else ph.remove();
+            } catch (e) {
+                ph.remove();
+            }
+        }
+
+        // Inject only detail fragments for tracks which already show a badge but lack details
+        for (const dp of detailPlaceholders) {
+            const id = dp.dataset.trackId;
+            if (!id || seen.has(id)) {
+                // If we already handled this id above, remove placeholder to avoid redundant work
+                dp.remove();
+                continue;
+            }
+            try {
+                const track = await this.api.getTrack(id);
+                if (!track) {
+                    dp.remove();
+                    continue;
+                }
+                const html = createQualityBadgeHTML(track);
+                if (!html || !html.length) {
+                    dp.remove();
+                    continue;
+                }
+
+                // Parse the produced HTML and extract .quality-details if present
+                const temp = document.createElement('div');
+                temp.innerHTML = html;
+                const detailsEl = temp.querySelector('.quality-details');
+
+                if (detailsEl && detailsEl.childElementCount) {
+                    // Find the existing badge wrapper for this track and append the details if missing
+                    const trackItem = document.querySelector(`.track-item[data-track-id="${id}"]`);
+                    if (trackItem) {
+                        const wrapper = trackItem.querySelector('.quality-badge-wrapper');
+                        if (wrapper) {
+                            if (!wrapper.querySelector('.quality-details')) {
+                                wrapper.appendChild(detailsEl);
+                            }
+                            dp.remove();
+                            continue;
+                        }
+
+                        // If wrapper not found, append details directly into the title area
+                        const titleEl = trackItem.querySelector('.title');
+                        if (titleEl && !titleEl.querySelector('.quality-details')) {
+                            titleEl.insertAdjacentElement('beforeend', detailsEl);
+                            dp.remove();
+                            continue;
+                        }
+                    }
+                }
+
+                // Try to inject a pure details fragment using createQualityDetailsHTML (for cases where badges don't include details)
+                try {
+                    const { createQualityDetailsHTML } = await import('./utils.js');
+                    const detailsHTML = createQualityDetailsHTML(track);
+                    if (detailsHTML && detailsHTML.length) {
+                        const trackItem2 = document.querySelector(`.track-item[data-track-id="${id}"]`);
+                        if (trackItem2) {
+                            const wrapper2 = trackItem2.querySelector('.quality-badge-wrapper');
+                            if (wrapper2 && !wrapper2.querySelector('.quality-details')) {
+                                const temp2 = document.createElement('div');
+                                temp2.innerHTML = detailsHTML;
+                                wrapper2.appendChild(temp2.firstElementChild);
+                                dp.remove();
+                                continue;
+                            }
+
+                            const titleEl2 = trackItem2.querySelector('.title');
+                            if (titleEl2 && !titleEl2.querySelector('.quality-details')) {
+                                titleEl2.insertAdjacentHTML('beforeend', detailsHTML);
+                                dp.remove();
+                                continue;
+                            }
+                        }
+                    }
+                } catch (e) {
+                    // ignore
+                }
+
+                // If we couldn't inject details sensibly, replace placeholder with full badge as a fallback
+                if (html && html.length) dp.outerHTML = html;
+                else dp.remove();
+            } catch (e) {
+                dp.remove();
+            }
+        }
     }
 
     createBaseCardHTML({
@@ -322,10 +446,12 @@ export class UIRenderer {
             <div class="card ${extraClasses} ${isCompact ? 'compact' : ''}" data-${type}-id="${id}" data-href="${href}" style="cursor: pointer;" ${extraAttributes}>
                 <div class="card-image-wrapper">
                     ${imageHTML}
-                    ${actionButtonsHTML}
                     ${buttonsInWrapper}
                 </div>
                 ${cardContent}
+                <div class="card-actions">
+                    ${actionButtonsHTML}
+                </div>
                 ${buttonsOutside}
             </div>
         `;
@@ -573,6 +699,13 @@ export class UIRenderer {
                 this.updateLikeState(element, 'track', track.id);
             }
         });
+
+        // After rendering, try to lazily resolve any badges that require more metadata
+        // (non-blocking)
+        setTimeout(() => {
+            try { this.resolveQualityBadges(); } catch (e) {}
+        }, 50);
+
     }
 
     setPageBackground(imageUrl) {
@@ -929,6 +1062,11 @@ export class UIRenderer {
                 link.pathname === `/${pageId}` || (pageId === 'home' && link.pathname === '/')
             );
         });
+
+        // Resolve any lazy quality badge placeholders that might be present in newly rendered content
+        try {
+            if (this.resolveQualityBadges) this.resolveQualityBadges();
+        } catch (e) {}
 
         document.querySelector('.main-content').scrollTop = 0;
 
@@ -1512,6 +1650,14 @@ export class UIRenderer {
             const coverUrl = this.api.getCoverUrl(album.cover);
             imageEl.src = coverUrl;
             imageEl.style.backgroundColor = '';
+
+            // Add quality badge to the album title/meta so users can see album quality at a glance
+            try {
+                const albumQualityBadge = createQualityBadgeHTML(album);
+                titleEl.innerHTML = `${escapeHtml(album.title)} ${albumQualityBadge}`;
+            } catch (e) {
+                titleEl.textContent = album.title;
+            }
 
             // Set background and vibrant color
             this.setPageBackground(coverUrl);
@@ -2756,6 +2902,14 @@ export class UIRenderer {
             const coverUrl = this.api.getCoverUrl(track.album?.cover);
             imageEl.src = coverUrl;
             imageEl.style.backgroundColor = '';
+
+            // Insert quality badges and meta data into title
+            try {
+                const qualityBadge = createQualityBadgeHTML(track);
+                titleEl.innerHTML = `${escapeHtml(displayTitle)} ${qualityBadge}`;
+            } catch (e) {
+                titleEl.textContent = displayTitle;
+            }
 
             this.setPageBackground(coverUrl);
             if (backgroundSettings.isEnabled() && track.album?.cover) {
