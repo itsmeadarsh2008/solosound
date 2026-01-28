@@ -1,50 +1,117 @@
 <p align="center">
-  <a href="https://monochrome.samidy.com">
-    <img src="https://github.com/SamidyFR/monochrome/blob/main/public/assets/512.png?raw=true" alt="Monochrome Logo" width="150px">
+  <a href="/">
+    <img src="/assets/logo.svg" alt="SoloSound Logo" width="150px">
   </a>
 </p>
 
-<h1 align="center">Monochrome</h1>
+<h1 align="center">SoloSound</h1>
 
-### **Monochrome** is an open-source, privacy-respecting, ad-free [TIDAL](https://tidal.com) web UI, built on top of [Hi-Fi](https://github.com/sachinsenal0x64/hifi).
+SoloSound is a lightweight, privacy-first, open-source music web app focused on a clean listening experience with high-quality audio, lyrics support, and a polished user interface.
 
-<br>
+---
 
-[<img src="https://files.catbox.moe/tpgxii.png" alt="Monochrome UI" width="800">](https://monochrome.samidy.com/#album/413189044)
+## 🚀 Features
 
-### Features
+- High-quality playback with support for Hi-Res audio
+- Word-synced lyrics and karaoke mode (AM-Lyrics integration)
+- Recently played & history tracking
+- Personal library: favorites, playlists, and user playlists
+- Offline-capable PWA with download support
+- Queue and playback controls, including shuffle/repeat
+- Multiple API instance support with smart failover
+- Customizable themes and accessibility-first design
+- Keyboard shortcuts and media session integration
 
-<ul>
-<li>High-quality Hi-Res/lossless audio streaming</li>
-<li>Lyrics support with karaoke mode</li>
-<li>Recently Played tracking for easy history access</li>
-<li>Comprehensive Personal Library for favorites</li>
-<li>Intelligent API caching for improved performance</li>
-<li>Offline-capable Progressive Web App (PWA)</li>
-<li>Media Session API integration for system controls</li>
-<li>Queue management with shuffle and repeat modes</li>
-<li>Track downloads with automatic metadata embedding</li>
-<li>Multiple API instance support with failover</li>
-<li>Dark, minimalist interface optimized for focus</li>
-<li>Customizable themes</li>
-<li>Keyboard shortcuts for power users</li>
-<li>Accurate and unique audio visualizer</li>
-<li>Account system for cross-device syncing</li>
-<li>Genius integration for lyrics</li>
-<li>Unreleased music from <a href="https://artistgrid.cx">ArtistGrid</a></li>
-<li>Dynamic Discord Embeds</li>
-<li>Smart recommendations for new songs, albums & artists</li>
-<li>Support for local music files</li>
-<li>Playlist import from other platforms</li>
-<li>Public playlists for social sharing</li>
-</ul>
+---
 
-### Check it out live at: [**monochrome.samidy.com**](https://monochrome.samidy.com)
+## 💿 Quick Start
 
-<br>
+Clone and install dependencies:
 
-[![GitHub stars](https://img.shields.io/github/stars/SamidyFR/monochrome?style=for-the-badge&color=ffffff&labelColor=000000)](https://github.com/SamidyFR/monochrome/stargazers)
-[![GitHub forks](https://img.shields.io/github/forks/SamidyFR/monochrome?style=for-the-badge&color=ffffff&labelColor=000000)](https://github.com/SamidyFR/monochrome/forks)
-[![GitHub issues](https://img.shields.io/github/issues/SamidyFR/monochrome?style=for-the-badge&color=ffffff&labelColor=000000)](https://github.com/SamidyFR/monochrome/issues)
+```bash
+git clone https://github.com/SamidyFR/monochrome.git solosound
+cd solosound
+# Use bun (recommended) or yarn/npm
+bun i
+# or
+# yarn
+# npm i
+```
 
-[<img src="https://github.com/monochrome-music/monochrome/blob/main/assets/asseenonfmhy880x310.png?raw=true" alt="As seen on FMHY" height="50">](https://fmhy.net/audio#streaming-sites)
+Run development server:
+
+```bash
+bun dev
+```
+
+Open your browser at http://localhost:3000 (or the port Bun reports).
+
+Build for production:
+
+```bash
+bun build
+```
+
+---
+
+## 🛠️ Project Structure
+
+- `index.html` — single-page entry and global assets
+- `styles.css` & `animation.css` — global styles
+- `am-lyrics.css` — enhanced lyrics styling for `am-lyrics` component
+- `js/` — application logic (player, UI, lyrics, settings)
+- `functions/` — serverless endpoints used by the app
+- `public/` — static assets and manifests
+
+---
+
+## 🎤 Lyrics (AM-Lyrics)
+
+SoloSound ships a refined styling layer for the `am-lyrics` web component. Features include:
+
+- Word-by-word karaoke highlighting and per-letter lift animations
+- Theme classes (`am-lyrics-theme-light`, `-minimal`, `-vibrant`, `-ambient`)
+- Fullscreen and cinema display modes
+- Respect for `prefers-reduced-motion` and high-contrast modes
+
+The component is loaded from CDN in `js/lyrics.js` when needed and the `am-lyrics.css` file is included globally. The CSS supports both shadow DOM `::part()` and standard DOM fallbacks. If you want automatic per-letter splitting, let us know and we can include the small helper that transforms words into letter spans with staggered indices.
+
+---
+
+## 🧩 Theming & Customization
+
+Customize the app via CSS variables or the theme UI (when available):
+
+- Colors: `--background`, `--foreground`, `--highlight`, `--muted`, `--border`
+- Lyrics: `--am-lyrics-highlight-color`, `--am-lyrics-glow-intensity`, `--am-lyrics-font-size`
+- Layout: `--player-bar-height-desktop`, `--player-bar-height-mobile`
+
+---
+
+## 🧪 Development Tips
+
+- The app is optimized to run locally with Bun for a fast dev loop. Use `bun dev` to start the server with automatic reloads.
+- Linting/formatting is set up; run `bun run lint` and `bun run format` if you make style changes.
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Please:
+
+1. Open an issue to discuss large changes.
+2. Create a branch for your work.
+3. Keep changes focused and include tests where appropriate.
+
+See `CONTRIBUTE.md` for more guidelines.
+
+---
+
+## 🔒 License
+
+MIT — see `LICENSE`.
+
+---
+
+Made with ❤️ by the SoloSound community. If you'd like help integrating AM-Lyrics per-letter JS helper or adding more themes, tell me and I’ll add it as a PR.
+

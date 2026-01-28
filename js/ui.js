@@ -2486,12 +2486,22 @@ export class UIRenderer {
                 return;
             }
 
+            // De-duplicate by track id (keep first occurrence = most recent)
+            const seenIds = new Set();
+            const uniqueHistory = [];
+            for (const item of history) {
+                if (!item || !item.id) continue;
+                if (seenIds.has(item.id)) continue;
+                seenIds.add(item.id);
+                uniqueHistory.push(item);
+            }
+
             // Group by date
             const groups = {};
             const today = new Date().setHours(0, 0, 0, 0);
             const yesterday = new Date(today - 86400000).setHours(0, 0, 0, 0);
 
-            history.forEach((item) => {
+            uniqueHistory.forEach((item) => {
                 const date = new Date(item.timestamp);
                 const dayStart = new Date(date).setHours(0, 0, 0, 0);
 
