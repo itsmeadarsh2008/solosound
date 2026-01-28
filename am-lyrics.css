@@ -1,0 +1,1020 @@
+/**
+ * AM-LYRICS CSS
+ * Inspired by Beautiful Lyrics for Spotify
+ * Complete styling with animations, transitions, and modern effects
+ */
+
+/* ============================================
+   CSS CUSTOM PROPERTIES (VARIABLES)
+   ============================================ */
+:root {
+  /* Typography */
+  --am-lyrics-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --am-lyrics-font-size: 2rem;
+  --am-lyrics-font-weight: 700;
+  --am-lyrics-line-height: 1.4;
+  --am-lyrics-letter-spacing: -0.02em;
+  
+  /* Colors */
+  --am-lyrics-text-color: #ffffff;
+  --am-lyrics-text-active: #ffffff;
+  --am-lyrics-text-inactive: rgba(255, 255, 255, 0.35);
+  --am-lyrics-text-past: rgba(255, 255, 255, 0.5);
+  --am-lyrics-text-shadow: rgba(0, 0, 0, 0.3);
+  --am-lyrics-highlight-color: #ffffff;
+  --am-lyrics-background: rgba(0, 0, 0, 0.7);
+  --am-lyrics-blur-backdrop: blur(40px);
+  
+  /* Timing & Animation */
+  --am-lyrics-transition-duration: 0.3s;
+  --am-lyrics-scroll-duration: 0.8s;
+  --am-lyrics-scroll-timing: cubic-bezier(0.4, 0, 0.2, 1);
+  --am-lyrics-fade-duration: 0.4s;
+  --am-lyrics-scale-active: 1.05;
+  --am-lyrics-scale-inactive: 0.95;
+  
+  /* Spacing */
+  --am-lyrics-line-spacing: 1.5rem;
+  --am-lyrics-padding-vertical: 3rem;
+  --am-lyrics-padding-horizontal: 2rem;
+  --am-lyrics-container-max-width: 800px;
+  
+  /* Effects */
+  --am-lyrics-glow-intensity: 20px;
+  --am-lyrics-shadow-offset: 2px;
+  --am-lyrics-blur-amount: 0px;
+  /* Letter lift / micro animations */
+  --am-lyrics-letter-lift-y: -24px;
+  --am-lyrics-letter-lift-scale: 1.22;
+  --am-lyrics-letter-lift-duration: 0.42s;
+  --am-lyrics-letter-lift-easing: cubic-bezier(0.22, 1.4, 0.35, 1);
+  --am-lyrics-letter-hover-lift: -10px;
+  --am-lyrics-letter-hover-scale: 1.08;
+  --am-lyrics-letter-stagger: 0.03s;
+}
+
+/* Dark theme adjustments */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --am-lyrics-background: rgba(18, 18, 18, 0.95);
+    --am-lyrics-text-shadow: rgba(0, 0, 0, 0.6);
+  }
+}
+
+/* ============================================
+   BASE COMPONENT STYLES
+   ============================================ */
+am-lyrics {
+  display: block;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-family: var(--am-lyrics-font-family);
+  color: var(--am-lyrics-text-color);
+  background: var(--am-lyrics-background);
+  backdrop-filter: var(--am-lyrics-blur-backdrop);
+  -webkit-backdrop-filter: var(--am-lyrics-blur-backdrop);
+}
+
+/* Container */
+.am-lyrics-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  max-width: var(--am-lyrics-container-max-width);
+  margin: 0 auto;
+  padding: var(--am-lyrics-padding-vertical) var(--am-lyrics-padding-horizontal);
+  overflow-y: auto;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+  isolation: isolate;
+  
+  /* Custom scrollbar */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+}
+
+.am-lyrics-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.am-lyrics-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.am-lyrics-container::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.3);
+  border-radius: 10px;
+  transition: background-color 0.3s ease;
+}
+
+.am-lyrics-container::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.5);
+}
+
+/* ============================================
+   LYRICS WRAPPER & POSITIONING
+   ============================================ */
+.am-lyrics-wrapper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--am-lyrics-line-spacing);
+  transition: transform var(--am-lyrics-scroll-duration) var(--am-lyrics-scroll-timing);
+  will-change: transform;
+}
+
+/* Center active line */
+.am-lyrics-wrapper[data-center-active="true"] {
+  min-height: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+/* ============================================
+   LYRICS LINE STYLES
+   ============================================ */
+.am-lyrics-line {
+  position: relative;
+  font-size: var(--am-lyrics-font-size);
+  font-weight: var(--am-lyrics-font-weight);
+  line-height: var(--am-lyrics-line-height);
+  letter-spacing: var(--am-lyrics-letter-spacing);
+  color: var(--am-lyrics-text-inactive);
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: 
+    color var(--am-lyrics-transition-duration) ease,
+    transform var(--am-lyrics-transition-duration) ease,
+    opacity var(--am-lyrics-fade-duration) ease,
+    filter var(--am-lyrics-transition-duration) ease;
+  opacity: 0.6;
+  transform: scale(var(--am-lyrics-scale-inactive));
+  transform-origin: left center;
+  will-change: transform, color, opacity;
+  text-shadow: 0 var(--am-lyrics-shadow-offset) 4px var(--am-lyrics-text-shadow);
+  filter: blur(var(--am-lyrics-blur-amount));
+}
+
+/* Hover effect */
+.am-lyrics-line:hover {
+  color: var(--am-lyrics-text-past);
+  opacity: 0.8;
+  transform: scale(1);
+}
+
+/* Active line (currently playing) */
+.am-lyrics-line[data-active="true"] {
+  color: var(--am-lyrics-text-active);
+  opacity: 1;
+  transform: scale(var(--am-lyrics-scale-active));
+  font-weight: 800;
+  text-shadow: 
+    0 0 var(--am-lyrics-glow-intensity) var(--am-lyrics-highlight-color),
+    0 var(--am-lyrics-shadow-offset) 8px var(--am-lyrics-text-shadow);
+  animation: lyric-pulse 0.6s ease-out;
+  filter: blur(0);
+}
+
+/* Past lines (already played) */
+.am-lyrics-line[data-past="true"] {
+  color: var(--am-lyrics-text-past);
+  opacity: 0.7;
+  transform: scale(0.98);
+}
+
+/* Future lines (not yet played) */
+.am-lyrics-line[data-future="true"] {
+  color: var(--am-lyrics-text-inactive);
+  opacity: 0.4;
+  filter: blur(0.5px);
+}
+
+/* ============================================
+   KARAOKE MODE (WORD-BY-WORD & LETTER-BY-LETTER)
+   ============================================ */
+.am-lyrics-line[data-karaoke="true"] {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35em;
+}
+
+.am-lyrics-word {
+  position: relative;
+  display: inline-flex;
+  color: inherit;
+  transition: 
+    color var(--am-lyrics-transition-duration) ease,
+    text-shadow var(--am-lyrics-transition-duration) ease;
+  will-change: color;
+}
+
+/* Active word in karaoke mode */
+.am-lyrics-word[data-active="true"] {
+  color: var(--am-lyrics-highlight-color);
+  text-shadow: 
+    0 0 calc(var(--am-lyrics-glow-intensity) * 0.8) var(--am-lyrics-highlight-color),
+    0 2px 4px var(--am-lyrics-text-shadow);
+  animation: word-glow 0.3s ease-out;
+}
+
+/* Sung word */
+.am-lyrics-word[data-sung="true"] {
+  color: var(--am-lyrics-text-past);
+}
+
+/* ============================================
+   LETTER-BY-LETTER LIFT ANIMATION
+   ============================================ */
+.am-lyrics-letter {
+  display: inline-block;
+  position: relative;
+  transition: transform var(--am-lyrics-letter-lift-duration) var(--am-lyrics-letter-lift-easing),
+              color 0.2s ease;
+  transform-origin: center bottom;
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* Hover micro-lift (interactive) */
+.am-lyrics-letter:hover {
+  transform: translateY(var(--am-lyrics-letter-hover-lift)) scale(var(--am-lyrics-letter-hover-scale));
+  text-shadow: 0 0 calc(var(--am-lyrics-glow-intensity) * 0.35) var(--am-lyrics-highlight-color);
+}
+
+/* Active letter - lifts up as pronounced, with stagger */
+.am-lyrics-letter[data-active="true"] {
+  animation: letter-lift var(--am-lyrics-letter-lift-duration) var(--am-lyrics-letter-lift-easing) both;
+  animation-delay: calc(var(--letter-index, 0) * var(--am-lyrics-letter-stagger));
+  color: var(--am-lyrics-highlight-color);
+  text-shadow:
+    0 0 calc(var(--am-lyrics-glow-intensity) * 0.8) var(--am-lyrics-highlight-color),
+    0 2px 8px var(--am-lyrics-text-shadow);
+  z-index: 2;
+}
+
+/* Pronounced letter - gentle settle/back into flow */
+.am-lyrics-letter[data-sung="true"] {
+  transform: translateY(0) scale(1);
+  color: var(--am-lyrics-text-past);
+  animation: letter-settle 0.36s cubic-bezier(0.2, 0.9, 0.25, 1) both;
+}
+
+/* Future letter */
+.am-lyrics-letter[data-future="true"] {
+  color: inherit;
+  opacity: 0.75;
+}
+
+/* Ensure letters in active lines can do more pronounced effects */
+.am-lyrics-line[data-active="true"] .am-lyrics-letter {
+  will-change: transform, opacity, text-shadow;
+}
+
+/* ============================================
+   WAVE TEXT ANIMATION
+   ============================================ */
+.am-lyrics-line[data-wave="true"] .am-lyrics-letter {
+  animation: wave-flow calc(var(--letter-index, 0) * 0.05s + 0.6s) ease-in-out infinite;
+  animation-delay: calc(var(--letter-index, 0) * 0.03s);
+}
+
+/* Active line wave - more pronounced */
+.am-lyrics-line[data-active="true"][data-wave="true"] .am-lyrics-letter {
+  animation: wave-flow-active calc(var(--letter-index, 0) * 0.05s + 0.5s) ease-in-out infinite;
+  animation-delay: calc(var(--letter-index, 0) * 0.03s);
+}
+
+/* Progressive wave as lyrics advance */
+.am-lyrics-line[data-active="true"] .am-lyrics-letter {
+  animation: progressive-wave 0.8s ease-out;
+  animation-delay: calc(var(--letter-index, 0) * 0.04s);
+  animation-fill-mode: both;
+}
+
+/* Letter entrance wave when line becomes active */
+.am-lyrics-line[data-active="true"] .am-lyrics-word {
+  animation: word-entrance-wave 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation-delay: calc(var(--word-index, 0) * 0.08s);
+  animation-fill-mode: both;
+}
+
+/* ============================================ */
+
+/* Active line wave - more pronounced */
+.am-lyrics-line[data-active="true"][data-wave="true"] .am-lyrics-letter {
+  animation: wave-flow-active calc(var(--letter-index, 0) * 0.05s + 0.5s) ease-in-out infinite;
+  animation-delay: calc(var(--letter-index, 0) * 0.03s);
+}
+
+/* Progressive wave as lyrics advance */
+.am-lyrics-line[data-active="true"] .am-lyrics-letter {
+  animation: progressive-wave 0.8s ease-out;
+  animation-delay: calc(var(--letter-index, 0) * 0.04s);
+  animation-fill-mode: both;
+}
+
+/* Letter entrance wave when line becomes active */
+.am-lyrics-line[data-active="true"] .am-lyrics-word {
+  animation: word-entrance-wave 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation-delay: calc(var(--word-index, 0) * 0.08s);
+  animation-fill-mode: both;
+}
+
+/* ============================================
+   LETTER LIFT ::part FALLBACKS & ADDITIONS
+   ============================================ */
+
+/* Webcomponent part support for words/letters (open-wc) */
+am-lyrics::part(word) {
+  display: inline-block;
+}
+am-lyrics::part(letter) {
+  display: inline-block;
+  position: relative;
+  transform-origin: center bottom;
+  transition: transform var(--am-lyrics-letter-lift-duration) var(--am-lyrics-letter-lift-easing), color 0.2s ease;
+  will-change: transform, opacity, text-shadow;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+am-lyrics::part(letter)[data-active="true"] {
+  animation: letter-lift var(--am-lyrics-letter-lift-duration) var(--am-lyrics-letter-lift-easing) both !important;
+  animation-delay: calc(var(--letter-index, 0) * var(--am-lyrics-letter-stagger)) !important;
+  color: var(--am-lyrics-highlight-color) !important;
+  text-shadow:
+    0 0 calc(var(--am-lyrics-glow-intensity) * 0.8) var(--am-lyrics-highlight-color),
+    0 2px 8px var(--am-lyrics-text-shadow) !important;
+  z-index: 2 !important;
+}
+am-lyrics::part(letter)[data-sung="true"] {
+  animation: letter-settle 0.36s cubic-bezier(0.2, 0.9, 0.25, 1) both !important;
+  transform: translateY(0) scale(1) !important;
+  color: var(--am-lyrics-text-past) !important;
+}
+
+/* Fallback for sites that don't split letters: animate words instead */
+am-lyrics::part(word)[data-active="true"],
+.am-lyrics-word[data-active="true"] {
+  animation: word-lift calc(var(--am-lyrics-letter-lift-duration, 0.42s)) var(--am-lyrics-letter-lift-easing) both;
+}
+
+/* Word-lift keyframes (gentler than per-letter) */
+@keyframes word-lift {
+  0% { transform: translateY(0) scale(1); }
+  30% { transform: translateY(-12px) scale(1.08); }
+  60% { transform: translateY(-6px) scale(1.03); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+/* Small hover micro-lift for words */
+am-lyrics::part(word):hover,
+.am-lyrics-word:hover {
+  transform: translateY(var(--am-lyrics-letter-hover-lift, -10px)) scale(var(--am-lyrics-letter-hover-scale, 1.08));
+  transition: transform 160ms ease;
+}
+
+/* Ensure reduced-motion respects user preference */
+@media (prefers-reduced-motion: reduce) {
+  am-lyrics::part(letter),
+  am-lyrics::part(word),
+  .am-lyrics-letter,
+  .am-lyrics-word {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* ============================================
+   BACKGROUND & SIDE VOCALS
+   ============================================ */
+.am-lyrics-line[data-vocal-type="background"],
+.am-lyrics-line[data-vocal-type="backing"] {
+  font-size: calc(var(--am-lyrics-font-size) * 0.85);
+  font-weight: 600;
+  opacity: 0.5;
+  font-style: italic;
+  padding-left: 2rem;
+  position: relative;
+}
+
+.am-lyrics-line[data-vocal-type="background"]::before,
+.am-lyrics-line[data-vocal-type="backing"]::before {
+  content: "♪";
+  position: absolute;
+  left: 0.5rem;
+  opacity: 0.6;
+  font-style: normal;
+}
+
+/* ============================================
+   LOADING & ERROR STATES
+   ============================================ */
+.am-lyrics-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--am-lyrics-text-inactive);
+  font-size: 1.2rem;
+}
+
+.am-lyrics-loading::after {
+  content: "";
+  width: 40px;
+  height: 40px;
+  margin-left: 1rem;
+  border: 4px solid rgba(255, 255, 255, 0.1);
+  border-top-color: var(--am-lyrics-text-active);
+  border-radius: 50%;
+  animation: spinner 0.8s linear infinite;
+}
+
+.am-lyrics-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--am-lyrics-text-inactive);
+  text-align: center;
+  padding: 2rem;
+}
+
+.am-lyrics-error-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+.am-lyrics-error-message {
+  font-size: 1.2rem;
+  margin-bottom: 0.5rem;
+}
+
+.am-lyrics-error-details {
+  font-size: 0.9rem;
+  opacity: 0.7;
+}
+
+/* No lyrics available */
+.am-lyrics-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--am-lyrics-text-inactive);
+  text-align: center;
+  padding: 2rem;
+}
+
+.am-lyrics-empty-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  opacity: 0.3;
+}
+
+.am-lyrics-empty-message {
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+/* ============================================
+   METADATA & FOOTER
+   ============================================ */
+.am-lyrics-metadata {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1.5rem 0;
+  margin-bottom: 2rem;
+  background: linear-gradient(
+    to bottom,
+    var(--am-lyrics-background) 0%,
+    var(--am-lyrics-background) 70%,
+    transparent 100%
+  );
+  backdrop-filter: var(--am-lyrics-blur-backdrop);
+  -webkit-backdrop-filter: var(--am-lyrics-blur-backdrop);
+  z-index: 10;
+}
+
+.am-lyrics-title {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: var(--am-lyrics-text-active);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.am-lyrics-artist {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--am-lyrics-text-past);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.am-lyrics-footer {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1.5rem 0;
+  margin-top: 2rem;
+  font-size: 0.85rem;
+  color: var(--am-lyrics-text-inactive);
+  background: linear-gradient(
+    to top,
+    var(--am-lyrics-background) 0%,
+    var(--am-lyrics-background) 70%,
+    transparent 100%
+  );
+  backdrop-filter: var(--am-lyrics-blur-backdrop);
+  -webkit-backdrop-filter: var(--am-lyrics-blur-backdrop);
+  z-index: 10;
+}
+
+.am-lyrics-provider {
+  opacity: 0.6;
+  transition: opacity 0.3s ease;
+}
+
+.am-lyrics-provider:hover {
+  opacity: 1;
+}
+
+/* ============================================
+   ANIMATIONS & KEYFRAMES
+   ============================================ */
+@keyframes lyric-pulse {
+  0% {
+    transform: scale(var(--am-lyrics-scale-inactive));
+  }
+  50% {
+    transform: scale(calc(var(--am-lyrics-scale-active) * 1.02));
+  }
+  100% {
+    transform: scale(var(--am-lyrics-scale-active));
+  }
+}
+
+@keyframes word-glow {
+  0% {
+    text-shadow: 
+      0 0 0 transparent,
+      0 2px 4px var(--am-lyrics-text-shadow);
+  }
+  50% {
+    text-shadow: 
+      0 0 calc(var(--am-lyrics-glow-intensity) * 1.2) var(--am-lyrics-highlight-color),
+      0 2px 6px var(--am-lyrics-text-shadow);
+  }
+  100% {
+    text-shadow: 
+      0 0 calc(var(--am-lyrics-glow-intensity) * 0.8) var(--am-lyrics-highlight-color),
+      0 2px 4px var(--am-lyrics-text-shadow);
+  }
+}
+
+/* Letter lift animation - bounces up when pronounced */
+@keyframes letter-lift {
+  0% {
+    transform: translateY(0) scale(1);
+  }
+  30% {
+    transform: translateY(-20px) scale(1.15);
+  }
+  50% {
+    transform: translateY(-25px) scale(1.2);
+  }
+  70% {
+    transform: translateY(-20px) scale(1.15);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Letter settle animation - gentle return to position */
+@keyframes letter-settle {
+  0% {
+    transform: translateY(-5px) scale(1.05);
+  }
+  60% {
+    transform: translateY(2px) scale(0.98);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Wave flow animation - continuous gentle wave */
+@keyframes wave-flow {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-3px) rotate(1deg);
+  }
+  50% {
+    transform: translateY(-5px) rotate(0deg);
+  }
+  75% {
+    transform: translateY(-3px) rotate(-1deg);
+  }
+}
+
+/* Wave flow active - more pronounced for active lines */
+@keyframes wave-flow-active {
+  0%, 100% {
+    transform: translateY(0) scale(1) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-6px) scale(1.05) rotate(2deg);
+  }
+  50% {
+    transform: translateY(-10px) scale(1.08) rotate(0deg);
+  }
+  75% {
+    transform: translateY(-6px) scale(1.05) rotate(-2deg);
+  }
+}
+
+/* Progressive wave - travels through the line */
+@keyframes progressive-wave {
+  0% {
+    transform: translateY(0) scale(0.95);
+    opacity: 0.5;
+  }
+  30% {
+    transform: translateY(-8px) scale(1.1);
+    opacity: 1;
+  }
+  60% {
+    transform: translateY(-12px) scale(1.15);
+  }
+  80% {
+    transform: translateY(-5px) scale(1.05);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+/* Word entrance wave */
+@keyframes word-entrance-wave {
+  0% {
+    transform: translateY(15px) scale(0.8);
+    opacity: 0;
+  }
+  60% {
+    transform: translateY(-5px) scale(1.05);
+    opacity: 1;
+  }
+  80% {
+    transform: translateY(2px) scale(0.98);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+/* Ripple effect from center */
+@keyframes ripple-from-center {
+  0% {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Elastic bounce */
+@keyframes elastic-bounce {
+  0% {
+    transform: scale(1) translateY(0);
+  }
+  30% {
+    transform: scale(1.25) translateY(-10px);
+  }
+  40% {
+    transform: scale(0.9) translateY(0);
+  }
+  50% {
+    transform: scale(1.1) translateY(-5px);
+  }
+  65% {
+    transform: scale(0.95) translateY(0);
+  }
+  75% {
+    transform: scale(1.05) translateY(-2px);
+  }
+  100% {
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes spinner {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-out {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+
+/* Fade in animation for lines */
+.am-lyrics-line {
+  animation: fade-in var(--am-lyrics-fade-duration) ease-out;
+}
+
+/* ============================================
+   DYNAMIC BACKGROUND EFFECT
+   ============================================ */
+.am-lyrics-dynamic-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: -1;
+  opacity: 0.15;
+  background: radial-gradient(
+    ellipse at center,
+    var(--am-lyrics-bg-color-1, #ff0080) 0%,
+    var(--am-lyrics-bg-color-2, #7928ca) 50%,
+    transparent 100%
+  );
+  filter: blur(80px);
+  transition: opacity 1s ease;
+}
+
+.am-lyrics-dynamic-background[data-active="true"] {
+  opacity: 0.25;
+}
+
+/* ============================================
+   FULLSCREEN MODE
+   ============================================ */
+.am-lyrics-fullscreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9999;
+  background: var(--am-lyrics-background);
+}
+
+.am-lyrics-fullscreen .am-lyrics-container {
+  max-width: 1200px;
+  padding: 5rem 3rem;
+}
+
+.am-lyrics-fullscreen .am-lyrics-line {
+  font-size: calc(var(--am-lyrics-font-size) * 1.2);
+}
+
+.am-lyrics-fullscreen .am-lyrics-line[data-active="true"] {
+  font-size: calc(var(--am-lyrics-font-size) * 1.4);
+}
+
+/* ============================================
+   CINEMA MODE
+   ============================================ */
+.am-lyrics-cinema {
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.95) 0%,
+    rgba(0, 0, 0, 0.85) 100%
+  );
+}
+
+.am-lyrics-cinema .am-lyrics-line {
+  text-align: center;
+  transform-origin: center center;
+}
+
+.am-lyrics-cinema .am-lyrics-line[data-active="true"] {
+  transform: scale(1.1);
+}
+
+/* ============================================
+   ROMANIZATION SUPPORT
+   ============================================ */
+.am-lyrics-romanization {
+  display: block;
+  font-size: 0.75em;
+  font-weight: 400;
+  opacity: 0.7;
+  margin-top: 0.25rem;
+  font-style: italic;
+  color: var(--am-lyrics-text-inactive);
+}
+
+.am-lyrics-line[data-active="true"] .am-lyrics-romanization {
+  opacity: 0.9;
+  color: var(--am-lyrics-text-past);
+}
+
+/* ============================================
+   RESPONSIVE DESIGN
+   ============================================ */
+@media (max-width: 768px) {
+  :root {
+    --am-lyrics-font-size: 1.5rem;
+    --am-lyrics-padding-vertical: 2rem;
+    --am-lyrics-padding-horizontal: 1.5rem;
+    --am-lyrics-line-spacing: 1.2rem;
+  }
+  
+  .am-lyrics-container {
+    padding: var(--am-lyrics-padding-vertical) var(--am-lyrics-padding-horizontal);
+  }
+  
+  .am-lyrics-line[data-vocal-type="background"],
+  .am-lyrics-line[data-vocal-type="backing"] {
+    padding-left: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  :root {
+    --am-lyrics-font-size: 1.2rem;
+    --am-lyrics-padding-vertical: 1.5rem;
+    --am-lyrics-padding-horizontal: 1rem;
+    --am-lyrics-line-spacing: 1rem;
+  }
+  
+  .am-lyrics-metadata {
+    padding: 1rem 0;
+    margin-bottom: 1.5rem;
+  }
+  
+  .am-lyrics-title {
+    font-size: 1.4rem;
+  }
+  
+  .am-lyrics-artist {
+    font-size: 1rem;
+  }
+}
+
+/* ============================================
+   ACCESSIBILITY
+   ============================================ */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  
+  .am-lyrics-wrapper {
+    transition: none;
+  }
+  
+  .am-lyrics-line {
+    transition: none;
+  }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  :root {
+    --am-lyrics-text-active: #ffffff;
+    --am-lyrics-text-inactive: rgba(255, 255, 255, 0.6);
+    --am-lyrics-text-past: rgba(255, 255, 255, 0.8);
+  }
+  
+  .am-lyrics-line[data-active="true"] {
+    text-shadow: none;
+    border-left: 4px solid var(--am-lyrics-highlight-color);
+    padding-left: 1rem;
+  }
+}
+
+/* Focus styles for keyboard navigation */
+.am-lyrics-line:focus {
+  outline: 2px solid var(--am-lyrics-highlight-color);
+  outline-offset: 4px;
+}
+
+/* ============================================
+   UTILITY CLASSES
+   ============================================ */
+.am-lyrics-hidden {
+  display: none !important;
+}
+
+.am-lyrics-visible {
+  display: block !important;
+}
+
+.am-lyrics-fade-in {
+  animation: fade-in 0.6s ease-out;
+}
+
+.am-lyrics-fade-out {
+  animation: fade-out 0.4s ease-out;
+}
+
+/* Smooth scrolling */
+.am-lyrics-smooth-scroll {
+  scroll-behavior: smooth;
+}
+
+/* ============================================
+   THEME VARIATIONS
+   ============================================ */
+
+/* Light theme */
+.am-lyrics-theme-light {
+  --am-lyrics-background: rgba(255, 255, 255, 0.95);
+  --am-lyrics-text-color: #000000;
+  --am-lyrics-text-active: #000000;
+  --am-lyrics-text-inactive: rgba(0, 0, 0, 0.35);
+  --am-lyrics-text-past: rgba(0, 0, 0, 0.5);
+  --am-lyrics-text-shadow: rgba(255, 255, 255, 0.3);
+  --am-lyrics-highlight-color: #007aff;
+}
+
+/* Minimal theme */
+.am-lyrics-theme-minimal {
+  --am-lyrics-glow-intensity: 0px;
+  --am-lyrics-shadow-offset: 0px;
+  --am-lyrics-scale-active: 1;
+  --am-lyrics-scale-inactive: 1;
+}
+
+/* Vibrant theme */
+.am-lyrics-theme-vibrant {
+  --am-lyrics-glow-intensity: 30px;
+  --am-lyrics-scale-active: 1.1;
+  --am-lyrics-highlight-color: #00ff88;
+}
+
+/* Ambient theme */
+.am-lyrics-theme-ambient {
+  --am-lyrics-blur-backdrop: blur(60px) saturate(150%);
+  --am-lyrics-background: rgba(0, 0, 0, 0.6);
+}
+
+/* ============================================
+   PRINT STYLES
+   ============================================ */
+@media print {
+  am-lyrics {
+    background: white;
+    color: black;
+  }
+  
+  .am-lyrics-line {
+    color: black !important;
+    opacity: 1 !important;
+    transform: none !important;
+    text-shadow: none !important;
+    filter: none !important;
+    page-break-inside: avoid;
+  }
+  
+  .am-lyrics-dynamic-background,
+  .am-lyrics-footer {
+    display: none;
+  }
+}
