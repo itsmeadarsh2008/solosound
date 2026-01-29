@@ -401,6 +401,24 @@ export function initializeSettings(scrobbler, player, api, ui) {
         });
     }
 
+    // Album Background Brightness
+    const albumBrightnessRange = document.getElementById('album-background-brightness-range');
+    const albumBrightnessValue = document.getElementById('album-background-brightness-value');
+    if (albumBrightnessRange && albumBrightnessValue) {
+        const current = backgroundSettings.getBrightness();
+        albumBrightnessRange.value = current;
+        albumBrightnessValue.textContent = current;
+
+        albumBrightnessRange.addEventListener('input', (e) => {
+            const val = parseFloat(e.target.value);
+            backgroundSettings.setBrightness(val);
+            albumBrightnessValue.textContent = val.toFixed(2);
+            // Apply immediately
+            document.documentElement.style.setProperty('--cover-filter', `blur(50px) brightness(${val})`);
+            window.dispatchEvent(new CustomEvent('album-background-brightness-change', { detail: { value: val } }));
+        });
+    }
+
     // Waveform Toggle
     const waveformToggle = document.getElementById('waveform-toggle');
     if (waveformToggle) {

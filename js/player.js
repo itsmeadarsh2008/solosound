@@ -168,82 +168,8 @@ export class Player {
 
                 if (coverEl) coverEl.src = this.api.getCoverUrl(track.album?.cover);
 
-                // Update the dynamic blurred background using the album art
-                try {
-                    const dyn = document.getElementById('dynamic-background');
-                    if (dyn) {
-                        // If the album background is disabled, ensure it's cleared
-                        if (!backgroundSettings.isEnabled()) {
-                            dyn.classList.remove('active');
-                            dyn.style.opacity = '0';
-                            dyn.style.backgroundImage = '';
-                            try {
-                                const pageBg = document.getElementById('page-background');
-                                if (pageBg) {
-                                    pageBg.classList.remove('active');
-                                    pageBg.style.backgroundImage = '';
-                                }
-                            } catch (err) {
-                                console.warn('Failed to clear page-background', err);
-                            }
-                        } else {
-                            // Pick sensible sizes for small vs large viewports to save bandwidth
-                            const smallSize = window.innerWidth <= 720 ? '320' : '640';
-                            const largeSize = '1280';
-                            const small = this.api.getCoverUrl(track.album?.cover, smallSize);
-                            const large = this.api.getCoverUrl(track.album?.cover, largeSize);
-
-                            // cross-fade: fade out, swap image to small first, then swap to large once loaded
-                            dyn.classList.remove('active');
-                            dyn.style.opacity = '0';
-
-                            // set overlay color if available (use a stronger alpha for contrast)
-                            const highlight = getComputedStyle(document.documentElement).getPropertyValue('--highlight-rgb').trim();
-                            if (highlight) {
-                                dyn.style.setProperty('--dyn-overlay', `rgba(${highlight}, 0.32)`);
-                            } else {
-                                dyn.style.setProperty('--dyn-overlay', 'rgba(0,0,0,0.32)');
-                            }
-
-                            setTimeout(() => {
-                                // Set low-res first for fast paint
-                                dyn.style.backgroundImage = `url('${small}')`;
-
-                                // Preload larger image and swap when ready for crispness
-                                const img = new Image();
-                                img.crossOrigin = 'anonymous';
-                                img.onload = () => {
-                                    dyn.style.backgroundImage = `url('${large}')`;
-                                };
-                                img.onerror = () => {
-                                    // ignore, keep small image
-                                };
-                                img.src = large;
-
-                                // Also update page-level background element, which lives inside <main>
-                                try {
-                                    const pageBg = document.getElementById('page-background');
-                                    if (pageBg) {
-                                        // Use the higher resolution image for the page header area
-                                        pageBg.style.backgroundImage = `url('${large}')`;
-                                        pageBg.classList.add('active');
-                                    }
-                                } catch (err) {
-                                    console.warn('Failed to update page-background', err);
-                                }
-
-                                // small tick to ensure transition works across browsers
-                                requestAnimationFrame(() => {
-                                    if (backgroundSettings.isAnimated()) dyn.classList.add('active');
-                                    else dyn.classList.remove('active');
-                                    dyn.style.opacity = '1';
-                                });
-                            }, 60);
-                        }
-                    }
-                } catch (e) {
-                    console.warn('Failed to update dynamic background', e);
-                }
+                // Update dynamic background to match current track
+                try { this.updateDynamicBackgroundForTrack(track); } catch (e) {}
 
                 if (titleEl) {
                     // Only set the title text (no details)
@@ -286,6 +212,8 @@ export class Player {
 
                 this.updatePlayingTrackIndicator();
                 this.updateMediaSession(track);
+                // Warm upcoming tracks upon restore
+                try { this.preloadNextTracks(); } catch (e) {}
             }
         }
     }
@@ -344,6 +272,85 @@ export class Player {
         });
     }
 
+    // Update dynamic background and page-level background using album art
+    updateDynamicBackgroundForTrack(track) {
+        try {
+            const dyn = document.getElementById('dynamic-background');
+            if (!dyn) return;
+
+            if (!backgroundSettings.isEnabled()) {
+                dyn.classList.remove('active');
+                dyn.style.opacity = '0';
+                dyn.style.backgroundImage = '';
+                try {
+                    const pageBg = document.getElementById('page-background');
+                    if (pageBg) {
+                        pageBg.classList.remove('active');
+                        pageBg.style.backgroundImage = '';
+                    }
+                } catch (err) {
+                    console.warn('Failed to clear page-background', err);
+                }
+                return;
+            }
+
+            if (!track || !track.album || !track.album.cover) {
+                // Clear if missing cover
+                dyn.classList.remove('active');
+                dyn.style.opacity = '0';
+                dyn.style.backgroundImage = '';
+                return;
+            }
+
+            // Pick sensible sizes for small vs large viewports to save bandwidth
+            const smallSize = window.innerWidth <= 720 ? '320' : '640';
+            const largeSize = '1280';
+            const small = this.api.getCoverUrl(track.album.cover, smallSize);
+            const large = this.api.getCoverUrl(track.album.cover, largeSize);
+
+            // cross-fade: swap image to small first, then swap to large once loaded
+            dyn.classList.remove('active');
+            dyn.style.opacity = '0';
+
+            // set overlay color if available (use a stronger alpha for contrast)
+            const highlight = getComputedStyle(document.documentElement).getPropertyValue('--highlight-rgb').trim();
+            if (highlight) {
+                dyn.style.setProperty('--dyn-overlay', `rgba(${highlight}, 0.32)`);
+            } else {
+                dyn.style.setProperty('--dyn-overlay', 'rgba(0,0,0,0.32)');
+            }
+
+            // Use low-res for immediate paint then replace with high-res when ready
+            dyn.style.backgroundImage = `url('${small}')`;
+
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.onload = () => {
+                dyn.style.backgroundImage = `url('${large}')`;
+                try {
+                    const pageBg = document.getElementById('page-background');
+                    if (pageBg) {
+                        pageBg.style.backgroundImage = `url('${large}')`;
+                        pageBg.classList.add('active');
+                    }
+                } catch (err) {
+                    console.warn('Failed to update page-background', err);
+                }
+            };
+            img.onerror = () => {};
+            img.src = large;
+
+            // Small tick to ensure transition works across browsers
+            requestAnimationFrame(() => {
+                if (backgroundSettings.isAnimated()) dyn.classList.add('active');
+                else dyn.classList.remove('active');
+                dyn.style.opacity = '1';
+            });
+        } catch (e) {
+            console.warn('updateDynamicBackgroundForTrack error', e);
+        }
+    }
+
     setQuality(quality) {
         this.quality = quality;
     }
@@ -351,6 +358,10 @@ export class Player {
     async preloadNextTracks() {
         if (this.preloadAbortController) {
             this.preloadAbortController.abort();
+            // Clean any injected preload hints from previous runs
+            try {
+                document.head.querySelectorAll('link[data-preload-for]').forEach((n) => n.remove());
+            } catch (e) {}
         }
 
         this.preloadAbortController = new AbortController();
@@ -374,10 +385,29 @@ export class Player {
                 if (this.preloadAbortController.signal.aborted) break;
 
                 this.preloadCache.set(track.id, streamUrl);
-                // Warm connection/cache
-                // For Blob URLs (DASH), this head request is not needed and can cause errors.
-                if (!streamUrl.startsWith('blob:')) {
-                    fetch(streamUrl, { method: 'HEAD', signal: this.preloadAbortController.signal }).catch(() => {});
+                // Add a preload hint and warm a small range to populate the browser cache.
+                try {
+                    if (!streamUrl.startsWith('blob:')) {
+                        // Remove any existing preload for the same track id
+                        document.head.querySelectorAll(`link[data-preload-for="${track.id}"]`).forEach((n) => n.remove());
+
+                        const link = document.createElement('link');
+                        link.rel = 'preload';
+                        link.as = 'audio';
+                        link.href = streamUrl;
+                        link.crossOrigin = 'anonymous';
+                        link.dataset.preloadFor = track.id;
+                        document.head.appendChild(link);
+
+                        // Warm a small range to help speed up first-play and caching
+                        fetch(streamUrl, {
+                            method: 'GET',
+                            headers: { Range: 'bytes=0-65535' },
+                            signal: this.preloadAbortController.signal,
+                        }).catch(() => {});
+                    }
+                } catch (e) {
+                    // ignore any preload failures
                 }
             } catch (error) {
                 if (error.name !== 'AbortError') {
@@ -431,6 +461,9 @@ export class Player {
             }
         }
         document.querySelector('.now-playing-bar .artist').innerHTML = trackArtistsHTML + yearDisplay;
+
+        // Update the dynamic background immediately for this track
+        try { this.updateDynamicBackgroundForTrack(track); } catch (e) {}
 
         const mixBtn = document.getElementById('now-playing-mix-btn');
         if (mixBtn) {
@@ -1137,6 +1170,8 @@ export class Player {
         this.shuffleActive = false;
         this.preloadCache.clear();
         this.saveQueueState();
+        // Start preloading the upcoming tracks immediately
+        try { this.preloadNextTracks(); } catch (e) {}
     }
 
     addToQueue(trackOrTracks) {
@@ -1148,6 +1183,8 @@ export class Player {
             this.playTrackFromQueue(0, 0);
         }
         this.saveQueueState();
+        // If we're not currently playing the new items, warm upcoming resources
+        try { this.preloadNextTracks(); } catch (e) {}
     }
 
     addNextToQueue(trackOrTracks) {

@@ -447,6 +447,7 @@ export const lyricsSettings = {
 export const backgroundSettings = {
     STORAGE_KEY: 'album-background-enabled',
     ANIMATED_KEY: 'album-background-animated',
+    BRIGHTNESS_KEY: 'album-background-brightness',
 
     isEnabled() {
         try {
@@ -473,6 +474,25 @@ export const backgroundSettings = {
 
     setAnimated(enabled) {
         localStorage.setItem(this.ANIMATED_KEY, enabled ? 'true' : 'false');
+    },
+
+    getBrightness() {
+        try {
+            const v = parseFloat(localStorage.getItem(this.BRIGHTNESS_KEY));
+            if (isNaN(v)) return 0.4;
+            // Clamp to reasonable bounds
+            return Math.max(0.2, Math.min(1.2, v));
+        } catch {
+            return 0.4;
+        }
+    },
+
+    setBrightness(value) {
+        try {
+            const v = Number(value);
+            if (isNaN(v)) return;
+            localStorage.setItem(this.BRIGHTNESS_KEY, String(v));
+        } catch {}
     },
 };
 

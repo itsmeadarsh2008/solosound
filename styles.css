@@ -36,7 +36,25 @@ h1, h2, h3, h4, h5, h6, .section-title {
     letter-spacing: -0.2px;
 }
 #page-library {
-    background-color: var(--background);
+    /* allow the global page background (cover/gradient) to show through */
+    background: transparent;
+}
+
+/* Library: allow page background to show through (no solid cards behind sections) */
+#page-library .content-section {
+    background: transparent;
+    box-shadow: none;
+    padding: var(--spacing-md); /* restore spacing for sections */
+}
+#page-library .content-section .card-grid,
+#page-library .content-section .card-grid > div {
+    background: transparent;
+    box-shadow: none;
+    padding: 0;
+}
+#page-library .library-header,
+#page-library .favorites-row {
+    background: transparent;
 }
 /* stylelint-disable no-descending-specificity */
 :root {
@@ -520,25 +538,60 @@ body.sidebar-collapsed .sidebar-nav .nav-item a:hover::after {
 
 .now-playing-bar {
     grid-area: player;
-    padding: var(--spacing-sm) var(--spacing-md);
+    padding: calc(var(--spacing-sm) * 0.85) calc(var(--spacing-md) * 1.1);
     display: grid;
-    grid-template-columns: 1fr 0.9fr 1fr;
-    align-items: center;
+    grid-template-columns: minmax(140px, 1fr) 1fr minmax(120px, 1fr);
+    align-items: left;
     gap: var(--spacing-sm);
     z-index: 2100;
 
-    /* Floating bar overrides */
+    /* Floating pill-style player */
     width: calc(96% - 190px) !important;
     left: calc(190px + 2%);
     bottom: 15px !important;
-    border-radius: 16px;
+    border-radius: 14px;
     position: fixed !important;
-    background-color: color-mix(in srgb, var(--card) 85%, transparent);
-    backdrop-filter: blur(20px);
-    border: 1px solid var(--border);
-    box-shadow: 0 8px 32px rgb(0, 0, 0, 0.4);
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    /* Less transparent: use a nearly-opaque background with a subtle gradient and stronger border */
+    --now-playing-bg: rgba(18, 18, 18, 0.92);
+    background-color: var(--now-playing-bg, rgba(18, 18, 18, 0.92));
+    background-image: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(0,0,0,0.02));
+    backdrop-filter: blur(26px) saturate(140%);
+    -webkit-backdrop-filter: blur(26px) saturate(140%);
+    border: 1px solid rgba(0, 0, 0, 0.6);
+    box-shadow: 0 14px 40px rgba(0, 0, 0, 0.6);
+    transition: all 0.32s cubic-bezier(0.25, 0.8, 0.25, 1);
     height: var(--player-bar-height-desktop);
+}
+
+/* Mobile / narrow screens - full width stick to bottom */
+@media (max-width: 720px) {
+    .now-playing-bar {
+        grid-template-columns: auto 1fr auto;
+        left: 10px !important;
+        right: 10px !important;
+        width: calc(100% - 20px) !important;
+        bottom: 10px !important;
+        padding: 10px 14px !important;
+        height: var(--player-bar-height-mobile);
+        border-radius: 12px;
+    }
+
+    .player-controls .progress-container {
+        max-width: none;
+    }
+
+    .player-controls .buttons .play-pause-btn {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+    }
+}
+
+/* Center progress bar on smaller widths for a modern look */
+@media (max-width: 1000px) {
+    .player-controls .progress-container {
+        max-width: 520px;
+    }
 }
 
 :root[data-theme='light'] .now-playing-bar {
@@ -847,6 +900,17 @@ body.elegant-mode {
     z-index: 1000;
 }
 
+/* When album art is used as a page background, give the header a subtle card background
+   to improve contrast against varied artwork */
+body.has-page-background .main-header {
+    background: color-mix(in srgb, var(--card) 88%, transparent);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-bottom: 1px solid color-mix(in srgb, var(--border) 12%, transparent);
+    padding: 0.5rem 1rem;
+    border-radius: 10px;
+}
+
 .navigation-controls {
     display: flex;
     gap: 0.5rem;
@@ -1146,11 +1210,11 @@ input[type='search']::-webkit-search-cancel-button {
 .search-tab.active::after {
     content: '';
     display: block;
-    width: 28%;
-    height: 4px;
-    background: var(--primary);
-    border-radius: 6px;
-    margin-top: 6px;
+    width: 24px; /* fixed width for consistent appearance */
+    height: 6px;
+    background: var(--hd-badge-bg, var(--primary)); /* match HD pill color if set */
+    border-radius: 999px;
+    margin: 6px auto 0; /* center under the tab */
 }
 
 
@@ -1496,17 +1560,7 @@ input[type='search']::-webkit-search-cancel-button {
     line-height: 1;
 }
 
-.quality-hires {
-    border: 1px solid var(--secondary);
-    color: var(--muted-foreground);
-    font-size: 0.6rem;
-    font-weight: 700;
-    padding: 0.15rem 0.3rem;
-    border-radius: 3px;
-    margin-left: 0.5rem;
-    vertical-align: middle;
-    line-height: 1;
-}
+.quality-hires { background: var(--hd-badge-bg, #6a54ff); color: var(--hd-badge-foreground, #fff); padding: 0.12rem 0.45rem; border-radius: 999px; font-weight: 800; font-size: 0.72rem; display: inline-flex; align-items: center; justify-content: center; text-transform: uppercase; letter-spacing: 0.4px; box-shadow: 0 2px 6px rgba(0,0,0,0.12); margin-left: 0.5rem; }
 
 .track-list {
     display: flex;
@@ -1967,12 +2021,14 @@ input[type='search']::-webkit-search-cancel-button {
 .btn-create:hover { filter: brightness(1.02); transform: translateY(-1px); box-shadow: 0 8px 20px rgba(0,0,0,0.14); }
 
 /* Quality badges */
-.quality-badge-wrapper { display: inline-flex; gap: 0.45rem; align-items: center; margin-left: 0.5rem; }
-.quality-badge { font-weight: 700; font-size: 0.72rem; padding: 0.18rem 0.5rem; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; text-transform: uppercase; letter-spacing: 0.3px; }
-.quality-hires { background: var(--primary); color: var(--primary-foreground); }
+.quality-badge-wrapper { display: inline-flex; gap: 0.45rem; align-items: center; margin-left: 0.5rem; vertical-align: middle; }
+.quality-badge { font-weight: 700; font-size: 0.72rem; padding: 0.18rem 0.5rem; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; text-transform: uppercase; letter-spacing: 0.3px; background: rgba(0,0,0,0.56); color: #fff; }
+/* HD pill (unified style used for legacy and new inline badges) */
+.quality-hires,
+.quality-hd-inline { background: var(--hd-badge-bg, #6a54ff); color: var(--hd-badge-foreground, #fff); padding: 0.12rem 0.45rem; border-radius: 999px; font-weight: 800; font-size: 0.72rem; display: inline-flex; align-items: center; justify-content: center; text-transform: uppercase; letter-spacing: 0.4px; box-shadow: 0 2px 6px rgba(0,0,0,0.12); }
 .quality-format { /* FLAC / format badge */ background: rgba(0,0,0,0.72); color: #fff; border-radius: 10px; font-weight: 700; }
 .quality-lossless { background: rgba(0,0,0,0.72); color: #fff; border-radius: 10px; }
-.quality-high { background: transparent; color: var(--foreground); border-radius: 8px; padding: 0.12rem 0.4rem; font-weight: 600; /* removed explicit border per request */ }
+.quality-high { background: transparent; color: var(--foreground); border-radius: 8px; padding: 0.12rem 0.4rem; font-weight: 600; }
 .quality-low { background: transparent; color: var(--muted-foreground); border-radius: 8px; padding: 0.12rem 0.36rem; font-weight: 600; }
 .quality-details { display: inline-flex; gap: 0.3rem; align-items: center; margin-left: 0.4rem; }
 .quality-detail { font-size: 0.72rem; padding: 0.12rem 0.28rem; border-radius: 6px; background: rgba(255,255,255,0.02); color: var(--muted-foreground); font-weight: 600; }
@@ -1994,9 +2050,9 @@ input[type='search']::-webkit-search-cancel-button {
 .now-playing-bar .title { display: flex; flex-direction: column; align-items: center; gap: 0.45rem; text-align: center; }
 .now-title-text { font-size: 1.6rem; font-weight: 800; }
 .now-quality-row { display: flex; flex-direction: column; align-items: center; gap: 0.25rem; }
-.now-hd-badge .quality-badge { font-size: 0.9rem; padding: 0.24rem 0.6rem; border-radius: 12px; }
 .now-quality-details { display: flex; gap: 0.4rem; align-items: center; }
 .quality-details-inline { font-size: 0.92rem; color: var(--muted-foreground); font-weight: 700; }
+/* .quality-hd-inline is unified above (uses --hd-badge-bg / --hd-badge-foreground) */
 .quality-format-inline { font-size: 0.82rem; color: var(--foreground); background: rgba(255,255,255,0.03); padding: 0.08rem 0.4rem; border-radius: 8px; font-weight: 700; }
 
 .now-playing-bar .title .quality-detail { font-size: 0.92rem; padding: 0.2rem 0.6rem; background: rgba(255,255,255,0.04); color: var(--foreground); border-radius: 12px; font-weight: 800; }
@@ -2351,8 +2407,15 @@ input:checked + .slider::before {
 .player-controls .buttons .play-pause-btn {
     background-color: var(--primary);
     color: var(--primary-foreground);
-    width: 36px;
-    height: 36px;
+    width: 48px;
+    height: 48px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+    transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+.player-controls .buttons .play-pause-btn:hover {
+    transform: translateY(-2px) scale(1.03);
+    box-shadow: 0 10px 24px rgba(0,0,0,0.42);
 }
 
 @media (hover: hover) {

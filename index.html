@@ -27,7 +27,7 @@
     </head>
 
     <body>
-        <audio id="audio-player" crossorigin="anonymous"></audio>
+        <audio id="audio-player" preload="auto" crossorigin="anonymous"></audio>
         <div id="dynamic-background" class="dynamic-bg" aria-hidden="true"></div>
         <div id="context-menu">
             <ul>
@@ -1779,6 +1779,17 @@
                                     <input type="checkbox" id="animated-background-toggle" />
                                     <span class="slider"></span>
                                 </label>
+                            </div>
+
+                            <div class="setting-item">
+                                <div class="info">
+                                    <span class="label">Album Background Brightness</span>
+                                    <span class="description">Adjust brightness to make the album art background dimmer or brighter.</span>
+                                </div>
+                                <div style="display:flex; align-items:center; gap:0.75rem">
+                                    <input type="range" id="album-background-brightness-range" min="0.2" max="1.2" step="0.02" />
+                                    <div id="album-background-brightness-value" style="width:48px; text-align:right">0.4</div>
+                                </div>
                             </div> 
                             <div class="setting-item">
                                 <div class="info">

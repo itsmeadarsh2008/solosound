@@ -6,6 +6,7 @@ import {
     nowPlayingSettings,
     trackListSettings,
     downloadQualitySettings,
+    backgroundSettings,
 } from './storage.js';
 import { UIRenderer } from './ui.js';
 import { Player } from './player.js';
@@ -338,6 +339,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.documentElement.style.setProperty('--radius', radiusNum + 'px');
         if (borderRange) {
             borderRange.value = radiusNum;
+
+            // Initialize album background brightness so page background filter matches saved setting
+            try {
+                const bgBrightness = backgroundSettings.getBrightness();
+                document.documentElement.style.setProperty('--cover-filter', `blur(50px) brightness(${bgBrightness})`);
+            } catch (e) {
+                // ignore
+            }
+
             if (borderValueEl) borderValueEl.textContent = `${radiusNum}px`;
             borderRange.addEventListener('input', (e) => {
                 const val = Number(e.target.value);

@@ -598,12 +598,15 @@ export class UIRenderer {
 
         const isCompact = cardSettings.isCompactAlbum();
 
+        // Keep album subtitle simple — quality (HD) is shown within the quality badge next to title when applicable
+        const subtitle = `${escapeHtml(album.artist?.name ?? '')} • ${yearDisplay}${typeLabel}`;
+
         return this.createBaseCardHTML({
             type: 'album',
             id: album.id,
             href: `/album/${album.id}`,
             title: `${escapeHtml(album.title)} ${explicitBadge} ${qualityBadge}`,
-            subtitle: `${escapeHtml(album.artist?.name ?? '')} • ${yearDisplay}${typeLabel}`,
+            subtitle: subtitle,
             imageHTML: `<img src="${this.api.getCoverUrl(album.cover)}" alt="${escapeHtml(album.title)}" class="card-image" loading="lazy">`,
             actionButtonsHTML: `
                 <button class="like-btn card-like-btn" data-action="toggle-like" data-type="album" title="Add to Liked">
@@ -711,6 +714,12 @@ export class UIRenderer {
     setPageBackground(imageUrl) {
         const bgElement = document.getElementById('page-background');
         if (backgroundSettings.isEnabled() && imageUrl) {
+            // Ensure cover filter brightness is applied from settings
+            try {
+                const b = backgroundSettings.getBrightness();
+                document.documentElement.style.setProperty('--cover-filter', `blur(50px) brightness(${b})`);
+            } catch (e) {}
+
             bgElement.style.backgroundImage = `url('${imageUrl}')`;
             bgElement.classList.add('active');
             document.body.classList.add('has-page-background');
@@ -786,15 +795,16 @@ export class UIRenderer {
         root.style.setProperty('--active-highlight', adjustedColor);
         root.style.setProperty('--ring', adjustedColor);
 
-        // Calculate a safe hover color
+        // Calculate a safe hover color with slightly higher alpha for better contrast
         let hoverColor;
+        const alpha = brightness > 200 ? 0.32 : 0.26;
         if (brightness > 200) {
             const dr = Math.floor(r * 0.85);
             const dg = Math.floor(g * 0.85);
             const db = Math.floor(b * 0.85);
-            hoverColor = `rgba(${dr}, ${dg}, ${db}, 0.25)`;
+            hoverColor = `rgba(${dr}, ${dg}, ${db}, ${alpha})`;
         } else {
-            hoverColor = `rgba(${r}, ${g}, ${b}, 0.15)`;
+            hoverColor = `rgba(${r}, ${g}, ${b}, ${alpha})`;
         }
         root.style.setProperty('--track-hover-bg', hoverColor);
     }

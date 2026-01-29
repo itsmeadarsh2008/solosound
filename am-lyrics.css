@@ -72,10 +72,11 @@ am-lyrics {
   overflow: hidden;
   font-family: var(--am-lyrics-font-family);
   color: var(--am-lyrics-text-color);
-  background: var(--am-lyrics-background);
-  backdrop-filter: var(--am-lyrics-blur-backdrop);
-  -webkit-backdrop-filter: var(--am-lyrics-blur-backdrop);
-}
+  /* Background removed */
+  background: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+} 
 
 /* Container */
 .am-lyrics-container {
@@ -494,16 +495,12 @@ am-lyrics::part(word):hover,
   gap: 0.5rem;
   padding: 1.5rem 0;
   margin-bottom: 2rem;
-  background: linear-gradient(
-    to bottom,
-    var(--am-lyrics-background) 0%,
-    var(--am-lyrics-background) 70%,
-    transparent 100%
-  );
-  backdrop-filter: var(--am-lyrics-blur-backdrop);
-  -webkit-backdrop-filter: var(--am-lyrics-blur-backdrop);
+  /* Background removed */
+  background: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
   z-index: 10;
-}
+} 
 
 .am-lyrics-title {
   font-size: 1.8rem;
@@ -531,16 +528,12 @@ am-lyrics::part(word):hover,
   margin-top: 2rem;
   font-size: 0.85rem;
   color: var(--am-lyrics-text-inactive);
-  background: linear-gradient(
-    to top,
-    var(--am-lyrics-background) 0%,
-    var(--am-lyrics-background) 70%,
-    transparent 100%
-  );
-  backdrop-filter: var(--am-lyrics-blur-backdrop);
-  -webkit-backdrop-filter: var(--am-lyrics-blur-backdrop);
+  /* Background removed */
+  background: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
   z-index: 10;
-}
+} 
 
 .am-lyrics-provider {
   opacity: 0.6;
@@ -767,26 +760,13 @@ am-lyrics::part(word):hover,
    DYNAMIC BACKGROUND EFFECT
    ============================================ */
 .am-lyrics-dynamic-background {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: -1;
-  opacity: 0.15;
-  background: radial-gradient(
-    ellipse at center,
-    var(--am-lyrics-bg-color-1, #ff0080) 0%,
-    var(--am-lyrics-bg-color-2, #7928ca) 50%,
-    transparent 100%
-  );
-  filter: blur(80px);
-  transition: opacity 1s ease;
-}
+  /* Dynamic background disabled */
+  display: none !important;
+} 
 
 .am-lyrics-dynamic-background[data-active="true"] {
-  opacity: 0.25;
-}
+  display: none !important;
+} 
 
 /* ============================================
    FULLSCREEN MODE
@@ -798,8 +778,8 @@ am-lyrics::part(word):hover,
   right: 0;
   bottom: 0;
   z-index: 9999;
-  background: var(--am-lyrics-background);
-}
+  background: transparent !important;
+} 
 
 .am-lyrics-fullscreen .am-lyrics-container {
   max-width: 1200px;
@@ -818,11 +798,8 @@ am-lyrics::part(word):hover,
    CINEMA MODE
    ============================================ */
 .am-lyrics-cinema {
-  background: linear-gradient(
-    to bottom,
-    rgba(0, 0, 0, 0.95) 0%,
-    rgba(0, 0, 0, 0.85) 100%
-  );
+  /* Cinema overlay removed */
+  background: transparent !important;
 }
 
 .am-lyrics-cinema .am-lyrics-line {

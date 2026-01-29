@@ -240,10 +240,11 @@ export const createQualityBadgeHTML = (track) => {
     }
 
     const badges = [];
+    let hiRes = false;
 
     if (quality === 'HI_RES_LOSSLESS') {
-        // Keep the Hi-Res badge but remove the explicit FLAC badge (format is obvious). Format will appear in details.
-        badges.push('<span class="quality-badge quality-hires" title="Hi-Res Lossless">HD</span>');
+        // Show HD as an inline detail instead of a main badge to keep the lists compact
+        hiRes = true;
     } else if (quality === 'LOSSLESS') {
         // No prominent format badge for LOSSLESS; details will show the format when available.
     } else if (quality === 'HIGH') {
@@ -291,6 +292,9 @@ export const createQualityBadgeHTML = (track) => {
 
     if (bitDepth) detailParts.push(`<span class="quality-detail" title="Bit depth">${bitDepth}</span>`);
     if (sampleRate) detailParts.push(`<span class="quality-detail" title="Sample rate">${sampleRate}</span>`);
+
+    // If hi-res, show a compact HD pill inline with details (at the start)
+    if (hiRes) detailParts.unshift(`<span class="quality-detail quality-hd-inline" title="Hi-Res Lossless">HD</span>`);
 
     return `<span class="quality-badge-wrapper">${badges.join('')}<span class="quality-details">${detailParts.join('')}</span></span>`;
 };
@@ -528,30 +532,29 @@ export const createQualityDetailsHTML = (track) => {
     if (bitDepth) parts.push(bitDepth);
     if (sampleRate) parts.push(sampleRate);
 
-    if (!parts.length && !formatLabel) return '';
-
-    const combined = parts.join(' • ');
-
-    return `<div class="now-quality-details">${formatLabel ? `<span class="quality-format-inline">${formatLabel}</span>` : ''}${combined ? `<span class="quality-details-inline">${combined}</span>` : ''}</div>`;
-};
-
-/**
- * Build the Now Playing title HTML: title + centered HD badge (if hi-res) + details line
- */
-export const createNowPlayingTitleHTML = (track) => {
-    const title = escapeHtml(getTrackTitle(track));
-
-    // Determine quality token to decide if we should show centered HD badge
+    // Determine hi-res token (we'll show HD inline even if no other details exist)
     let token = null;
     if (track && track.playbackQualityToken) token = track.playbackQualityToken;
     else if (track && track.playbackQuality) token = normalizeQualityToken(track.playbackQuality);
     else token = deriveTrackQuality(track);
 
-    const hdBadge = token === 'HI_RES_LOSSLESS' ? '<div class="now-hd-badge"><span class="quality-badge quality-hires" title="Hi-Res Lossless">HD</span></div>' : '';
+    const isHiRes = token === 'HI_RES_LOSSLESS';
 
+    if (!parts.length && !formatLabel && !isHiRes) return '';
+
+    const combined = parts.join(' • ');
+    const hiresHTML = isHiRes ? `<span class="quality-hd-inline" title="Hi-Res Lossless">HD</span>` : '';
+
+    return `<div class="now-quality-details">${hiresHTML}${formatLabel ? `<span class="quality-format-inline">${formatLabel}</span>` : ''}${combined ? `<span class="quality-details-inline">${combined}</span>` : ''}</div>`;
+};
+
+/**
+ * Build the Now Playing title HTML: title + details line
+ */
+export const createNowPlayingTitleHTML = (track) => {
+    const title = escapeHtml(getTrackTitle(track));
     const detailsHTML = createQualityDetailsHTML(track);
-
-    return `<div class="now-title-text">${title}</div><div class="now-quality-row">${hdBadge}${detailsHTML}</div>`;
+    return `<div class="now-title-text">${title}</div><div class="now-quality-row">${detailsHTML}</div>`;
 };
 
 const coverCache = new Map();
