@@ -1,4 +1,3 @@
-# Hero greeting styles
 #home-hero {
     padding: 3rem 0 2rem 2rem;
     text-align: left;
@@ -6,7 +5,7 @@
 }
 .hero-greeting {
     font-family: 'Righteous', cursive !important;
-    font-size: 3.5rem;
+    font-size: clamp(2.5rem, 6vw, 3.5rem);
     font-weight: 800;
     line-height: 1.1;
     margin-bottom: 0.5rem;
@@ -16,7 +15,7 @@
 }
 .hero-greeting-sub {
     font-family: 'Roboto', Arial, sans-serif !important;
-    font-size: 1.35rem;
+    font-size: clamp(1rem, 2.5vw, 1.35rem);
     font-weight: 400;
     color: var(--muted-foreground, #aaa);
     margin-bottom: 0.5rem;
@@ -68,10 +67,10 @@ h1, h2, h3, h4, h5, h6, .section-title {
     --spacing-2xl: 3rem;
     --radius: 0.5rem;
     --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    --shadow-sm: 0 3px 10px rgba(0, 0, 0, 0.10);
-    --shadow-md: 0 6px 18px rgba(0, 0, 0, 0.14);
-    --shadow-lg: 0 8px 20px rgba(0, 0, 0, 0.22);
-    --shadow-xl: 0 12px 36px rgba(0, 0, 0, 0.30);
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
     --cover-filter: blur(50px) brightness(0.4);
     --player-bar-height-desktop: 90px;
     --player-bar-height-mobile: 130px;
@@ -341,8 +340,6 @@ img {
 
 * {
     font-family: Roboto, sans-serif !important;
-    transition: none !important;
-    animation: none !important;
 }
 
 .text-link {
@@ -513,9 +510,25 @@ body.sidebar-collapsed .sidebar-nav .nav-item a.active::before {
     opacity: 1;
 }
 
-/* Light mode adjustments */
-:root[data-theme='light'] #page-background {
-    mask-image: linear-gradient(to bottom, rgb(0, 0, 0, 1) 0%, rgb(0, 0, 0, 0) 100%);
+/* When page background is active, adjust text colors for contrast */
+body.has-page-background .detail-header-info .title {
+    color: var(--primary-foreground);
+}
+
+body.has-page-background .detail-header-info .type {
+    color: var(--primary-foreground);
+}
+
+body.has-page-background .detail-header-info .meta {
+    color: color-mix(in srgb, var(--primary-foreground) 70%, var(--background) 30%);
+}
+
+body.has-page-background .detail-header-info .meta a {
+    color: var(--primary-foreground);
+}
+
+body.has-page-background .detail-header-info .meta a:hover {
+    color: var(--highlight);
 }
 
 /* When sidebar is collapsed, show tooltips on hover */
@@ -1310,7 +1323,7 @@ input[type='search']::-webkit-search-cancel-button {
 
 .card-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: var(--spacing-lg);
 }
 
@@ -1326,6 +1339,7 @@ input[type='search']::-webkit-search-cancel-button {
 .card:hover {
     background-color: var(--secondary);
     transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
 }
 
 .card-image-wrapper {
@@ -2006,7 +2020,7 @@ input[type='search']::-webkit-search-cancel-button {
     font-weight: 600;
     font-size: 0.95rem;
     cursor: pointer;
-    transition: none;
+    transition: all 0.2s ease;
     box-shadow: var(--shadow-sm);
     -webkit-tap-highlight-color: transparent;
 }
@@ -2108,7 +2122,9 @@ body.compact-mode .search-tab { min-width: 48px; padding: 0.28rem 0.45rem; }
 
 
 .btn-primary:hover {
-    /* No hover transform or shadow for precision */
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+    filter: brightness(1.05);
 }
 
 .btn-primary:active {
@@ -2133,11 +2149,13 @@ body.compact-mode .search-tab { min-width: 48px; padding: 0.28rem 0.45rem; }
     border-radius: var(--radius);
     cursor: pointer;
     font-weight: 500;
-    transition: none;
+    transition: all 0.2s ease;
 }
 
 .btn-secondary:hover {
     background-color: color-mix(in srgb, var(--card) 70%, transparent);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
 }
 
 .btn-secondary:active {

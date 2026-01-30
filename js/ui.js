@@ -617,7 +617,7 @@ export class UIRenderer {
         });
     }
 
-    createArtistCardHTML(artist) {
+    createArtistCardHTML(artist, includeLikeButton = true) {
         const isCompact = cardSettings.isCompactArtist();
 
         return this.createBaseCardHTML({
@@ -627,11 +627,11 @@ export class UIRenderer {
             title: escapeHtml(artist.name),
             subtitle: '',
             imageHTML: `<img src="${this.api.getArtistPictureUrl(artist.picture)}" alt="${escapeHtml(artist.name)}" class="card-image" loading="lazy">`,
-            actionButtonsHTML: `
+            actionButtonsHTML: includeLikeButton ? `
                 <button class="like-btn card-like-btn" data-action="toggle-like" data-type="artist" title="Add to Liked">
                     ${this.createHeartIcon(false)}
                 </button>
-            `,
+            ` : '',
             isCompact,
             extraClasses: 'artist',
         });
@@ -1392,7 +1392,7 @@ export class UIRenderer {
                     if (filteredArtists.length > 0) {
                         artistsContainer.innerHTML = filteredArtists
                             .slice(0, 12)
-                            .map((a) => this.createArtistCardHTML(a))
+                            .map((a) => this.createArtistCardHTML(a, false))
                             .join('');
                         filteredArtists.slice(0, 12).forEach((a) => {
                             const el = artistsContainer.querySelector(`[data-artist-id="${a.id}"]`);
