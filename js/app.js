@@ -27,7 +27,8 @@ import {
 import { debounce, SVG_PLAY } from './utils.js';
 import { sidePanelManager } from './side-panel.js';
 import { db } from './db.js';
-import { syncManager } from './accounts/pocketbase.js';
+import { syncManager } from './accounts/sync.js';
+import { socialManager } from './social.js';
 import { registerSW } from 'virtual:pwa-register';
 import './smooth-scrolling.js';
 import { readTrackMetadata } from './metadata.js';
@@ -326,10 +327,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (durationToggle) durationToggle.checked = showDurations;
 
         // Listeners
-        elegantToggle?.addEventListener('change', (e) => {
+        elegantToggle?.addEventListener('change', async (e) => {
             const on = e.target.checked;
             document.body.classList.toggle('elegant-mode', on);
             try { localStorage.setItem('elegant-mode', on ? 'true' : 'false'); } catch (e) {}
+            // Sync settings change
+            const { syncManager } = await import('./accounts/sync.js');
+            syncManager.collectAndSyncAllSettings();
         });
         // Initialize and wire up the border radius range control
         const borderRange = document.getElementById('border-radius-range');
@@ -354,14 +358,20 @@ document.addEventListener('DOMContentLoaded', async () => {
                 document.documentElement.style.setProperty('--radius', val + 'px');
                 if (borderValueEl) borderValueEl.textContent = `${val}px`;
             });
-            borderRange.addEventListener('change', (e) => {
+            borderRange.addEventListener('change', async (e) => {
                 try { localStorage.setItem('global-border-radius', String(e.target.value)); } catch (e) {}
+                // Sync settings change
+                const { syncManager } = await import('./accounts/sync.js');
+                syncManager.collectAndSyncAllSettings();
             });
         }
-        durationToggle?.addEventListener('change', (e) => {
+        durationToggle?.addEventListener('change', async (e) => {
             const on = e.target.checked;
             document.body.classList.toggle('hide-track-durations', !on);
             try { localStorage.setItem('show-track-durations', on ? 'true' : 'false'); } catch (e) {}
+            // Sync settings change
+            const { syncManager } = await import('./accounts/sync.js');
+            syncManager.collectAndSyncAllSettings();
         });
     } catch (e) {}
 
@@ -1421,6 +1431,55 @@ document.addEventListener('DOMContentLoaded', async () => {
                     else btn.textContent = 'Select Music Folder';
                     btn.disabled = false;
                 }
+            }
+        }
+
+        // Quick action buttons
+        if (e.target.closest('#create-playlist-action')) {
+            const modal = document.getElementById('playlist-modal');
+            document.getElementById('playlist-modal-title').textContent = 'Create Playlist';
+            document.getElementById('playlist-name-input').value = '';
+            document.getElementById('playlist-cover-input').value = '';
+            modal.dataset.editingId = '';
+            document.getElementById('csv-import-section').style.display = 'block';
+            document.getElementById('csv-file-input').value = '';
+
+            // Reset Public Toggle
+            const publicToggle = document.getElementById('playlist-public-toggle');
+            const shareBtn = document.getElementById('playlist-share-btn');
+            if (publicToggle) publicToggle.checked = false;
+            if (shareBtn) shareBtn.style.display = 'none';
+
+            modal.classList.add('active');
+            document.getElementById('playlist-name-input').focus();
+        }
+
+        if (e.target.closest('#liked-songs-action')) {
+            navigate('/library#tracks');
+        }
+
+        // Homepage refresh buttons
+        if (e.target.closest('#refresh-songs-btn')) {
+            const btn = e.target.closest('#refresh-songs-btn');
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<svg class="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle></svg>';
+            btn.disabled = true;
+
+            try {
+                await ui.renderHomePage();
+            } catch (error) {
+                console.error('Failed to refresh recommendations:', error);
+            } finally {
+                btn.innerHTML = originalHTML;
+                btn.disabled = false;
+            }
+        }
+
+        if (e.target.closest('#clear-recent-btn')) {
+            if (confirm('Are you sure you want to clear your listening history?')) {
+                await db.clearHistory();
+                await ui.renderHomePage();
+                showNotification('Listening history cleared');
             }
         }
     });

@@ -20,7 +20,7 @@ import { openLyricsPanel } from './lyrics.js';
 import { recentActivityManager, backgroundSettings, cardSettings, visualizerSettings } from './storage.js';
 import { db } from './db.js';
 import { getVibrantColorFromImage } from './vibrant-color.js';
-import { syncManager } from './accounts/pocketbase.js';
+import { syncManager } from './accounts/sync.js';
 import { Visualizer } from './visualizer.js';
 import { navigate } from './router.js';
 
@@ -1254,6 +1254,12 @@ export class UIRenderer {
     async renderHomePage() {
         this.showPage('home');
 
+        // Show/hide sign-in banner based on auth status
+        const signinBanner = document.getElementById('home-signin-banner');
+        if (signinBanner) {
+            signinBanner.style.display = window.authManager && window.authManager.user ? 'none' : 'block';
+        }
+
         const welcomeEl = document.getElementById('home-welcome');
         const contentEl = document.getElementById('home-content');
 
@@ -1290,6 +1296,8 @@ export class UIRenderer {
         this.renderHomeAlbums();
         this.renderHomeArtists();
         this.renderHomeRecent();
+
+        // Friend activity is now handled by social manager automatically
     }
 
     async getSeeds() {
@@ -1464,6 +1472,73 @@ export class UIRenderer {
             } else {
                 recentContainer.innerHTML = createPlaceholder('No recent items yet...');
             }
+        }
+    }
+
+    async renderFriendsActivity() {
+        const activitySection = document.getElementById('friends-activity-section');
+        const activityContainer = document.getElementById('home-friends-activity');
+
+        if (!activitySection || !activityContainer) return;
+
+        // Check if social features are available
+        if (!window.socialManager) {
+            activitySection.style.display = 'none';
+            return;
+        }
+
+        try {
+            const friendsActivity = await window.socialManager._friendActivity || [];
+            const activityFeed = await window.socialManager._activityFeed || [];
+
+            // Combine and sort by time
+            const allActivity = [
+                ...friendsActivity.map(activity => ({
+                    ...activity,
+                    type: 'friend_listening',
+                    timestamp: activity.updated_at
+                })),
+                ...activityFeed.map(activity => ({
+                    ...activity,
+                    type: 'activity_feed',
+                    timestamp: activity.created_at
+                }))
+            ].sort((a, b) => b.timestamp - a.timestamp).slice(0, 5); // Show only 5 most recent
+
+            if (allActivity.length > 0) {
+                activitySection.style.display = 'block';
+                activityContainer.innerHTML = allActivity.map(activity => {
+                    if (activity.type === 'friend_listening') {
+                        return `
+                            <div class="friend-activity-item">
+                                <div class="activity-info">
+                                    <span class="friend-code">${activity.friend_code}</span>
+                                    <span class="activity-status">${activity.is_playing ? 'is listening to' : 'last listened to'}</span>
+                                    <span class="track-title">${activity.track_data.title}</span>
+                                    ${activity.is_playing ? `<span class="progress">${Math.floor(activity.progress_seconds / 60)}:${(activity.progress_seconds % 60).toString().padStart(2, '0')}</span>` : ''}
+                                </div>
+                                <button onclick="window.player.loadTrack(${JSON.stringify(activity.track_data).replace(/"/g, '&quot;')})">
+                                    Listen
+                                </button>
+                            </div>
+                        `;
+                    } else {
+                        return `
+                            <div class="activity-item">
+                                <span class="activity-friend">${activity.friend_code}</span>
+                                <span class="activity-type">${window.socialManager._formatActivityType(activity.activity_type)}</span>
+                                <span class="activity-data">${window.socialManager._formatActivityData(activity)}</span>
+                                <span class="activity-time">${window.socialManager._formatTime(activity.timestamp)}</span>
+                            </div>
+                        `;
+                    }
+                }).join('');
+            } else {
+                activitySection.style.display = 'none';
+            }
+        } catch (error) {
+            console.error('Error rendering friends activity:', error);
+            activitySection.style.display = 'none';
         }
     }
 

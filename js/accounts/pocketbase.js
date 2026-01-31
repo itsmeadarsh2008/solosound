@@ -1,14 +1,14 @@
-import PocketBase from 'pocketbase';
-import { db } from '../db.js';
+// js/accounts/sync.js
+import { createClient } from "@libsql/client";
 import { authManager } from './auth.js';
 
-const PUBLIC_COLLECTION = 'public_playlists';
-const POCKETBASE_URL = 'https://monodb.samidy.com';
-const pb = new PocketBase(POCKETBASE_URL);
-pb.autoCancellation(false);
+const client = createClient({
+    url: "your-turso-url", // Replace with your Turso URL
+    authToken: "your-auth-token", // Replace with your auth token
+});
 
 const syncManager = {
-    pb: pb,
+    client: client,
     _userRecordCache: null,
     _isSyncing: false,
 
@@ -22,33 +22,82 @@ const syncManager = {
         }
 
         try {
-            const record = await this.pb.collection('DB_users').getFirstListItem(`firebase_id="${uid}"`, { f_id: uid });
-            this._userRecordCache = record;
-            return record;
-        } catch (error) {
-            if (error.status === 404) {
-                try {
-                    const newRecord = await this.pb.collection('DB_users').create(
-                        {
-                            firebase_id: uid,
-                            library: {},
-                            history: [],
-                            user_playlists: {},
-                            user_folders: {},
-                        },
-                        { f_id: uid }
-                    );
-                    this._userRecordCache = newRecord;
-                    return newRecord;
-                } catch (createError) {
-                    console.error('Failed to create user record in PocketBase:', createError);
-                    return null;
-                }
+            const result = await this.client.execute({
+                sql: "SELECT * FROM user_library WHERE user_id = ?",
+                args: [uid],
+            });
+            if (result.rows.length > 0) {
+                this._userRecordCache = JSON.parse(result.rows[0].data);
+                return this._userRecordCache;
             }
-            console.error('Failed to get user record from PocketBase:', error);
+            return null;
+        } catch (error) {
+            console.error('Failed to get user record from Turso:', error);
             return null;
         }
     },
+
+    async _createUserRecord(uid) {
+        try {
+            await this.client.execute({
+                sql: "INSERT INTO user_library (user_id, data, created_at, updated_at) VALUES (?, ?, ?, ?)",
+                args: [uid, JSON.stringify({}), Date.now(), Date.now()],
+            });
+            return {};
+        } catch (error) {
+            console.error('Failed to create user record in Turso:', error);
+            return null;
+        }
+    },
+
+    async syncData(type, data) {
+        if (!authManager.user) return;
+
+        const uid = authManager.user.id;
+        try {
+            const existing = await this._getUserRecord(uid);
+            if (!existing) {
+                await this._createUserRecord(uid);
+            }
+
+            await this.client.execute({
+                sql: `UPDATE user_${type} SET data = ?, updated_at = ? WHERE user_id = ?`,
+                args: [JSON.stringify(data), Date.now(), uid],
+            });
+        } catch (error) {
+            console.error('Failed to sync data:', error);
+        }
+    },
+
+    async getData(type) {
+        if (!authManager.user) return null;
+
+        const uid = authManager.user.id;
+        try {
+            const result = await this.client.execute({
+                sql: `SELECT data FROM user_${type} WHERE user_id = ?`,
+                args: [uid],
+            });
+            if (result.rows.length > 0) {
+                return JSON.parse(result.rows[0].data);
+            }
+        } catch (error) {
+            console.error('Failed to get data:', error);
+        }
+        return null;
+    },
+
+    onAuthStateChanged(user) {
+        if (user) {
+            this._userRecordCache = null; // Reset cache
+            // Sync data on sign in
+        }
+    },
+};
+
+authManager.onAuthStateChanged(syncManager.onAuthStateChanged.bind(syncManager));
+
+export { syncManager };,
 
     async getUserData() {
         const user = authManager.user;

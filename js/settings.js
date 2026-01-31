@@ -18,36 +18,20 @@ import {
 } from './storage.js';
 import { db } from './db.js';
 import { authManager } from './accounts/auth.js';
-import { syncManager } from './accounts/pocketbase.js';
-import { saveFirebaseConfig, clearFirebaseConfig } from './accounts/config.js';
+import { syncManager } from './accounts/sync.js';
 
 export function initializeSettings(scrobbler, player, api, ui) {
     // Initialize account system UI & Settings
     authManager.updateUI(authManager.user);
 
     // Email Auth UI Logic
-    const toggleEmailBtn = document.getElementById('toggle-email-auth-btn');
     const cancelEmailBtn = document.getElementById('cancel-email-auth-btn');
     const authContainer = document.getElementById('email-auth-container');
-    const authButtonsContainer = document.getElementById('auth-buttons-container');
+    const authButtonsContainer = document.querySelector('.auth-alternatives');
     const emailInput = document.getElementById('auth-email');
     const passwordInput = document.getElementById('auth-password');
     const signInBtn = document.getElementById('email-signin-btn');
     const signUpBtn = document.getElementById('email-signup-btn');
-
-    if (toggleEmailBtn && authContainer && authButtonsContainer) {
-        toggleEmailBtn.addEventListener('click', () => {
-            authContainer.style.display = 'flex';
-            authButtonsContainer.style.display = 'none';
-        });
-    }
-
-    if (cancelEmailBtn && authContainer && authButtonsContainer) {
-        cancelEmailBtn.addEventListener('click', () => {
-            authContainer.style.display = 'none';
-            authButtonsContainer.style.display = 'flex';
-        });
-    }
 
     if (signInBtn) {
         signInBtn.addEventListener('click', async () => {
@@ -57,6 +41,9 @@ export function initializeSettings(scrobbler, player, api, ui) {
                 alert('Please enter both email and password.');
                 return;
             }
+            signInBtn.disabled = true;
+            const originalText = signInBtn.textContent;
+            signInBtn.textContent = 'Signing in...';
             try {
                 await authManager.signInWithEmail(email, password);
                 authContainer.style.display = 'none';
@@ -65,6 +52,9 @@ export function initializeSettings(scrobbler, player, api, ui) {
                 passwordInput.value = '';
             } catch {
                 // Error handled in authManager
+            } finally {
+                signInBtn.textContent = originalText;
+                signInBtn.disabled = false;
             }
         });
     }
@@ -77,6 +67,9 @@ export function initializeSettings(scrobbler, player, api, ui) {
                 alert('Please enter both email and password.');
                 return;
             }
+            signUpBtn.disabled = true;
+            const originalText = signUpBtn.textContent;
+            signUpBtn.textContent = 'Signing up...';
             try {
                 await authManager.signUpWithEmail(email, password);
                 authContainer.style.display = 'none';
@@ -85,9 +78,85 @@ export function initializeSettings(scrobbler, player, api, ui) {
                 passwordInput.value = '';
             } catch {
                 // Error handled in authManager
+            } finally {
+                signUpBtn.textContent = originalText;
+                signUpBtn.disabled = false;
             }
         });
     }
+
+    const forgotPasswordBtn = document.getElementById('forgot-password-btn');
+    if (forgotPasswordBtn) {
+        forgotPasswordBtn.addEventListener('click', async () => {
+            const email = emailInput.value;
+            if (!email) {
+                alert('Please enter your email address.');
+                return;
+            }
+            try {
+                await authManager.forgotPassword(email);
+            } catch {
+                // Error handled in authManager
+            }
+        });
+    }
+
+    // Primary connect button behavior
+    const connectBtn = document.getElementById('firebase-connect-btn');
+    if (connectBtn) {
+        connectBtn.addEventListener('click', async () => {
+            if (authManager.user) {
+                if (confirm('Sign out?')) {
+                    await authManager.signOut();
+                }
+                return;
+            }
+            // Show email sign-in form
+            authContainer.style.display = 'flex';
+            authButtonsContainer.style.display = 'none';
+        });
+    }
+
+    // Reset password UI
+    const openResetBtn = document.getElementById('open-reset-password-btn');
+    const resetContainer = document.getElementById('reset-password-container');
+    const resetTokenInput = document.getElementById('reset-token');
+    const resetPasswordInput = document.getElementById('reset-password');
+    const resetBtn = document.getElementById('reset-password-btn');
+    const cancelResetBtn = document.getElementById('cancel-reset-password-btn');
+
+    // If a token is given (dev), show quick access
+    openResetBtn?.addEventListener('click', () => {
+        resetContainer.style.display = 'block';
+        authContainer.style.display = 'none';
+        authButtonsContainer.style.display = 'none';
+    });
+
+    cancelResetBtn?.addEventListener('click', () => {
+        resetContainer.style.display = 'none';
+        authButtonsContainer.style.display = 'flex';
+    });
+
+    resetBtn?.addEventListener('click', async () => {
+        const token = resetTokenInput.value.trim();
+        const newPass = resetPasswordInput.value;
+        if (!token || !newPass) {
+            alert('Please enter the token and a new password.');
+            return;
+        }
+        try {
+            resetBtn.disabled = true;
+            await authManager.resetPassword(token, newPass);
+            resetTokenInput.value = '';
+            resetPasswordInput.value = '';
+            resetContainer.style.display = 'none';
+            authButtonsContainer.style.display = 'flex';
+        } catch {
+            // error handled in authManager
+        } finally {
+            resetBtn.disabled = false;
+        }
+    });
 
     const lastfmConnectBtn = document.getElementById('lastfm-connect-btn');
     const lastfmStatus = document.getElementById('lastfm-status');
@@ -651,27 +720,19 @@ export function initializeSettings(scrobbler, player, api, ui) {
 
     const customDbBtn = document.getElementById('custom-db-btn');
     const customDbModal = document.getElementById('custom-db-modal');
-    const customPbUrlInput = document.getElementById('custom-pb-url');
-    const customFirebaseConfigInput = document.getElementById('custom-firebase-config');
+    const customTursoUrlInput = document.getElementById('custom-turso-url');
+    const customTursoTokenInput = document.getElementById('custom-turso-token');
     const customDbSaveBtn = document.getElementById('custom-db-save');
     const customDbResetBtn = document.getElementById('custom-db-reset');
     const customDbCancelBtn = document.getElementById('custom-db-cancel');
 
     if (customDbBtn && customDbModal) {
         customDbBtn.addEventListener('click', () => {
-            const pbUrl = localStorage.getItem('monochrome-pocketbase-url') || '';
-            const fbConfig = localStorage.getItem('monochrome-firebase-config');
+            const tursoUrl = localStorage.getItem('monochrome-turso-url') || '';
+            const tursoToken = localStorage.getItem('monochrome-turso-token') || '';
 
-            customPbUrlInput.value = pbUrl;
-            if (fbConfig) {
-                try {
-                    customFirebaseConfigInput.value = JSON.stringify(JSON.parse(fbConfig), null, 2);
-                } catch {
-                    customFirebaseConfigInput.value = fbConfig;
-                }
-            } else {
-                customFirebaseConfigInput.value = '';
-            }
+            customTursoUrlInput.value = tursoUrl;
+            customTursoTokenInput.value = tursoToken;
 
             customDbModal.classList.add('active');
         });
@@ -684,25 +745,19 @@ export function initializeSettings(scrobbler, player, api, ui) {
         customDbModal.querySelector('.modal-overlay').addEventListener('click', closeCustomDbModal);
 
         customDbSaveBtn.addEventListener('click', () => {
-            const pbUrl = customPbUrlInput.value.trim();
-            const fbConfigStr = customFirebaseConfigInput.value.trim();
+            const tursoUrl = customTursoUrlInput.value.trim();
+            const tursoToken = customTursoTokenInput.value.trim();
 
-            if (pbUrl) {
-                localStorage.setItem('monochrome-pocketbase-url', pbUrl);
+            if (tursoUrl) {
+                localStorage.setItem('monochrome-turso-url', tursoUrl);
             } else {
-                localStorage.removeItem('monochrome-pocketbase-url');
+                localStorage.removeItem('monochrome-turso-url');
             }
 
-            if (fbConfigStr) {
-                try {
-                    const fbConfig = JSON.parse(fbConfigStr);
-                    saveFirebaseConfig(fbConfig);
-                } catch {
-                    alert('Invalid JSON for Firebase Config');
-                    return;
-                }
+            if (tursoToken) {
+                localStorage.setItem('monochrome-turso-token', tursoToken);
             } else {
-                clearFirebaseConfig();
+                localStorage.removeItem('monochrome-turso-token');
             }
 
             alert('Settings saved. Reloading...');
@@ -711,8 +766,8 @@ export function initializeSettings(scrobbler, player, api, ui) {
 
         customDbResetBtn.addEventListener('click', () => {
             if (confirm('Reset custom database settings to default?')) {
-                localStorage.removeItem('monochrome-pocketbase-url');
-                clearFirebaseConfig();
+                localStorage.removeItem('monochrome-turso-url');
+                localStorage.removeItem('monochrome-turso-token');
                 alert('Settings reset. Reloading...');
                 window.location.reload();
             }

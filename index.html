@@ -19,7 +19,8 @@
         <link href="https://fonts.googleapis.com/css2?family=Righteous&display=swap&font-display=swap" rel="stylesheet">
         <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap&font-display=swap" rel="stylesheet">
         <!-- Icons: Feather icons (SVG) loaded via CDN -->
-        <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined&icon_names=home,library_music,history,settings,person,download,refresh,search,play_arrow,pause,favorite,more_vert,shuffle,repeat,queue_music,add,folder&display=block" rel="stylesheet">
+        <!-- Use the standard Material Symbols stylesheet (avoid icon_names param which can return HTML on some hosts) -->
+        <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined&display=swap" rel="stylesheet">
 
         <link rel="stylesheet" href="/styles.css" />
         <link rel="stylesheet" href="/animation.css" />
@@ -563,7 +564,7 @@
                     </button>
                 </div>
                 <p style="font-size: 0.9rem; color: var(--muted-foreground); margin-bottom: 1rem">
-                    Configure custom PocketBase and Firebase instances. Leave empty to use defaults.
+                    Configure custom Turso database. Leave empty to use defaults.
                     <br />
                     A Guide To Set This Up Can Be Found
                     <a
@@ -573,24 +574,22 @@
                     >.
                 </p>
                 <div style="margin-bottom: 1rem">
-                    <label style="display: block; margin-bottom: 0.5rem; font-size: 0.9rem">PocketBase URL</label>
+                    <label style="display: block; margin-bottom: 0.5rem; font-size: 0.9rem">Turso Database URL</label>
                     <input
                         type="url"
-                        id="custom-pb-url"
+                        id="custom-turso-url"
                         class="template-input"
-                        placeholder="https://monodb.samidy.com"
+                        placeholder="libsql://your-db.turso.io"
                     />
                 </div>
                 <div style="margin-bottom: 1rem">
-                    <label style="display: block; margin-bottom: 0.5rem; font-size: 0.9rem"
-                        >Firebase Configuration (JSON)</label
-                    >
-                    <textarea
-                        id="custom-firebase-config"
+                    <label style="display: block; margin-bottom: 0.5rem; font-size: 0.9rem">Turso Auth Token</label>
+                    <input
+                        type="password"
+                        id="custom-turso-token"
                         class="template-input"
-                        style="height: 150px; font-family: monospace; font-size: 0.8rem; resize: vertical"
-                        placeholder="{'apiKey': '...', ...}"
-                    ></textarea>
+                        placeholder="your-auth-token"
+                    />
                 </div>
                 <div class="modal-actions">
                     <button id="custom-db-cancel" class="btn-secondary">Cancel</button>
@@ -736,6 +735,12 @@
                                     <span>Account</span>
                                 </a>
                             </li>
+                            <li class="nav-item">
+                                <a href="/friends">
+                                    <i data-feather="users" class="icon" aria-hidden="true"></i>
+                                    <span>Friends</span>
+                                </a>
+                            </li>
                         </ul>
                     </nav>
                     <nav class="sidebar-nav">
@@ -801,6 +806,29 @@
                 </header>
 
                 <div id="page-home" class="page">
+                    <div id="home-signin-banner" class="signin-banner" style="display: none;">
+                        <div class="banner-content">
+                            <div class="banner-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="12" cy="7" r="4"></circle>
+                                </svg>
+                            </div>
+                            <div class="banner-text">
+                                <h3>Sync Your Music Library</h3>
+                                <p>Sign in to save and sync your favorites, playlists, and listening history across all your devices.</p>
+                            </div>
+                            <a href="/account" class="banner-btn">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+                                    <polyline points="10,17 15,12 10,7"></polyline>
+                                    <line x1="15" x2="3" y1="12" y2="12"></line>
+                                </svg>
+                                Sign In
+                            </a>
+                        </div>
+                    </div>
+
                     <section id="home-hero">
                         <div id="home-greeting" class="hero-greeting"></div>
                         <div id="home-greeting-sub" class="hero-greeting-sub"></div>
@@ -813,142 +841,125 @@
                     </div>
 
                     <div id="home-content" style="display: none">
-                        <section class="content-section home-recommended-section">
-                            <div
-                                style="
-                                    display: flex;
-                                    align-items: center;
-                                    justify-content: space-between;
-                                    margin-bottom: 1rem;
-                                "
-                            >
-                                <h2 class="section-title" style="margin-bottom: 0">Recommended Songs</h2>
-                                <button
-                                    class="btn-secondary"
-                                    id="refresh-songs-btn"
-                                    title="Refresh"
-                                    style="padding: 4px 8px"
-                                >
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        width="16"
-                                        height="16"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        stroke-width="2"
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                    >
-                                        <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
-                                        <path d="M21 3v5h-5" />
-                                    </svg>
-                                </button>
+                        <!-- Quick Actions Row -->
+                        <section class="content-section" id="home-quick-actions" style="margin-bottom: 2rem;">
+                            <div class="quick-actions-grid">
+                                <a href="/friends" class="quick-action-card">
+                                    <div class="quick-action-icon">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                                            <circle cx="9" cy="7" r="4"></circle>
+                                            <path d="M22 2l-4 4m0-4l4 4"></path>
+                                        </svg>
+                                    </div>
+                                    <span class="quick-action-label">Friends</span>
+                                </a>
+                                <a href="/library" class="quick-action-card">
+                                    <div class="quick-action-icon">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M3 6h18v12H3V6z"></path>
+                                            <path d="M8 10v4"></path>
+                                            <path d="M12 10v4"></path>
+                                            <path d="M16 10v4"></path>
+                                        </svg>
+                                    </div>
+                                    <span class="quick-action-label">Your Library</span>
+                                </a>
+                                <div class="quick-action-card" id="create-playlist-action">
+                                    <div class="quick-action-icon">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                            <polyline points="14,2 14,8 20,8"></polyline>
+                                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                                            <polyline points="10,9 9,9 8,9"></polyline>
+                                        </svg>
+                                    </div>
+                                    <span class="quick-action-label">Create Playlist</span>
+                                </div>
+                                <div class="quick-action-card" id="liked-songs-action">
+                                    <div class="quick-action-icon">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                                        </svg>
+                                    </div>
+                                    <span class="quick-action-label">Liked Songs</span>
+                                </div>
                             </div>
-                            <div class="track-list" id="home-recommended-songs"></div>
                         </section>
-                        <section class="content-section">
-                            <div
-                                style="
-                                    display: flex;
-                                    align-items: center;
-                                    justify-content: space-between;
-                                    margin-bottom: 1rem;
-                                "
-                            >
-                                <h2 class="section-title" style="margin-bottom: 0">Recommended Albums</h2>
-                                <button
-                                    class="btn-secondary"
-                                    id="refresh-albums-btn"
-                                    title="Refresh"
-                                    style="padding: 4px 8px"
-                                >
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        width="16"
-                                        height="16"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        stroke-width="2"
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                    >
-                                        <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
-                                        <path d="M21 3v5h-5" />
+
+                        <!-- Friends Activity Section - More Prominent -->
+                        <section class="content-section" id="friends-activity-section" style="display: none; margin-bottom: 3rem;">
+                            <div class="section-header-modern">
+                                <div class="section-title-group">
+                                    <h2 class="section-title">Friends Activity</h2>
+                                    <p class="section-subtitle">See what your friends are listening to</p>
+                                </div>
+                                <a href="/friends" class="btn-secondary-modern">
+                                    <span>View All</span>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M9 18l6-6-6-6"></path>
                                     </svg>
-                                </button>
+                                </a>
                             </div>
-                            <div class="card-grid" id="home-recommended-albums"></div>
+                            <div id="home-friends-activity" class="activity-list-modern">
+                                <!-- Friends activity will be populated here -->
+                            </div>
                         </section>
+
+                        <!-- Made For You Section -->
                         <section class="content-section">
-                            <div
-                                style="
-                                    display: flex;
-                                    align-items: center;
-                                    justify-content: space-between;
-                                    margin-bottom: 1rem;
-                                "
-                            >
-                                <h2 class="section-title" style="margin-bottom: 0">Recommended Artists</h2>
-                                <button
-                                    class="btn-secondary"
-                                    id="refresh-artists-btn"
-                                    title="Refresh"
-                                    style="padding: 4px 8px"
-                                >
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        width="16"
-                                        height="16"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        stroke-width="2"
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                    >
-                                        <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
-                                        <path d="M21 3v5h-5" />
+                            <div class="section-header-modern">
+                                <div class="section-title-group">
+                                    <h2 class="section-title">Made For You</h2>
+                                    <p class="section-subtitle">Curated just for your taste</p>
+                                </div>
+                                <button class="btn-secondary-modern" id="refresh-songs-btn" title="Refresh">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"></path>
+                                        <path d="M21 3v5h-5"></path>
                                     </svg>
                                 </button>
                             </div>
-                            <div class="card-grid" id="home-recommended-artists"></div>
+                            <div class="track-list-modern" id="home-recommended-songs"></div>
                         </section>
+
+                        <!-- Recently Played -->
                         <section class="content-section">
-                            <div
-                                style="
-                                    display: flex;
-                                    align-items: center;
-                                    justify-content: space-between;
-                                    margin-bottom: 1rem;
-                                "
-                            >
-                                <h2 class="section-title" style="margin-bottom: 0">Jump Back In</h2>
-                                <button
-                                    class="btn-secondary"
-                                    id="clear-recent-btn"
-                                    title="Clear History"
-                                    style="padding: 4px 8px"
-                                >
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        width="16"
-                                        height="16"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        stroke-width="2"
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                    >
-                                        <path d="M3 6h18" />
-                                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-                                        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                            <div class="section-header-modern">
+                                <div class="section-title-group">
+                                    <h2 class="section-title">Recently Played</h2>
+                                    <p class="section-subtitle">Jump back into what you were listening to</p>
+                                </div>
+                                <button class="btn-secondary-modern" id="clear-recent-btn" title="Clear History">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M3 6h18"></path>
+                                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                                        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
                                     </svg>
                                 </button>
                             </div>
-                            <div class="card-grid" id="home-recent-mixed"></div>
+                            <div class="card-grid-modern" id="home-recent-mixed"></div>
+                        </section>
+
+                        <!-- Discover More -->
+                        <section class="content-section">
+                            <div class="section-header-modern">
+                                <div class="section-title-group">
+                                    <h2 class="section-title">Discover More</h2>
+                                    <p class="section-subtitle">Explore new music and artists</p>
+                                </div>
+                            </div>
+                            <div class="discover-grid">
+                                <div class="discover-section">
+                                    <h3 class="discover-title">Recommended Albums</h3>
+                                    <div class="card-grid-compact" id="home-recommended-albums"></div>
+                                </div>
+                                <div class="discover-section">
+                                    <h3 class="discover-title">Recommended Artists</h3>
+                                    <div class="card-grid-compact" id="home-recommended-artists"></div>
+                                </div>
+                            </div>
                         </section>
                     </div>
                 </div>
@@ -1797,7 +1808,7 @@
                                     <span class="description">Enable particle visualizer in full-screen mode</span>
                                 </div>
                                 <label class="toggle-switch">
-                                    <input type="checkbox" id="visualizer-enabled-toggle" checked />
+                                    <input type="checkbox" id="visualizer-enabled-toggle" />
                                     <span class="slider"></span>
                                 </label>
                             </div>
@@ -2274,94 +2285,250 @@
                     </div>
                 </div>
                 <div id="page-account" class="page">
-                    <h2 class="section-title" style="text-align: center">Sign Up / Sign In</h2>
+                    <div class="account-hero">
+                        <div class="account-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="12" cy="7" r="4"></circle>
+                            </svg>
+                        </div>
+                        <h1 class="account-title">Your Music Account</h1>
+                        <p class="account-subtitle">Access your personalized music experience across all devices</p>
+                    </div>
+
                     <div class="account-content">
-                        <p style="text-align: center" class="account-description">
-                            Make an account to allow syncing your library between devices.
-                        </p>
-                        <div
-                            class="account-buttons"
-                            id="auth-buttons-container"
-                            style="
-                                display: flex;
-                                gap: 20px;
-                                align-items: center;
-                                justify-content: center;
-                                margin-top: 50px;
-                                flex-wrap: wrap;
-                            "
-                        >
-                            <button id="firebase-connect-btn" class="btn-secondary">Connect with Google</button>
-                            <button id="toggle-email-auth-btn" class="btn-secondary">Connect with Email</button>
-                            <button id="firebase-clear-cloud-btn" class="btn-secondary danger">Clear Cloud Data</button>
+                        <!-- Sign In Panel -->
+                        <div class="auth-card" id="sign-in-panel">
+                            <div class="auth-header">
+                                <h2>Welcome Back</h2>
+                                <p>Enter your 12-word seed phrase to access your account</p>
+                            </div>
+                            
+                            <!-- Seed Authentication -->
+                            <div id="seed-auth-container" class="seed-auth-form">
+                                <form class="auth-form">
+                                    <div class="form-group">
+                                        <label for="seed-phrase">Seed Phrase (12 words)</label>
+                                        <textarea id="seed-phrase" class="form-input" placeholder="Enter your 12-word seed phrase separated by spaces" rows="3" required></textarea>
+                                    </div>
+                                    <div class="form-actions">
+                                        <button type="button" id="seed-signin-btn" class="auth-btn auth-btn-primary">Sign In</button>
+                                        <button type="button" id="seed-generate-btn" class="auth-btn auth-btn-outline">Generate New Seed</button>
+                                    </div>
+                                </form>
+                            </div>
+
+                            <!-- Seed Generation Display -->
+                            <div id="seed-display-container" class="seed-display" style="display: none;">
+                                <div class="form-header">
+                                    <h3>Your New Seed Phrase</h3>
+                                    <p><strong>Important:</strong> Save this seed phrase securely. It is your only way to access your account. There is no recovery option.</p>
+                                </div>
+                                <div class="seed-words" id="generated-seed"></div>
+                                <div class="form-actions">
+                                    <button type="button" id="seed-confirm-btn" class="auth-btn auth-btn-primary">I Have Saved My Seed</button>
+                                    <button type="button" id="seed-cancel-btn" class="auth-btn auth-btn-outline">Cancel</button>
+                                </div>
+                            </div>
+
+                            <div class="auth-status">
+                                <p id="seed-status">Secure seed-based authentication - un-revokable and self-managed</p>
+                            </div>
                         </div>
 
-                        <div
-                            id="email-auth-container"
-                            style="
-                                display: none;
-                                flex-direction: column;
-                                gap: 15px;
-                                width: 100%;
-                                max-width: 320px;
-                                margin: 20px auto;
-                                padding: 20px;
-                                background: var(--card);
-                                border-radius: var(--radius);
-                                border: 1px solid var(--border);
-                            "
-                        >
-                            <h3 style="text-align: center; margin-bottom: 10px">Email Authentication</h3>
-                            <input type="email" id="auth-email" class="template-input" placeholder="Email Address" />
-                            <input type="password" id="auth-password" class="template-input" placeholder="Password" />
-                            <div style="display: flex; gap: 10px; justify-content: center; margin-top: 10px">
-                                <button id="email-signin-btn" class="btn-primary" style="flex: 1">Sign In</button>
-                                <button id="email-signup-btn" class="btn-secondary" style="flex: 1">Sign Up</button>
+                        <!-- Account Panel (shown after sign-in) -->
+                        <div class="account-panel" id="account-panel" style="display: none;">
+                            <div class="account-header">
+                                <div class="account-user-icon">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                        <circle cx="12" cy="7" r="4"></circle>
+                                    </svg>
+                                </div>
+                                <div class="account-user-info">
+                                    <h2 id="account-user-email">Signed in as</h2>
+                                    <p id="account-user-id" class="account-user-id"></p>
+                                </div>
                             </div>
-                            <button
-                                id="cancel-email-auth-btn"
-                                class="btn-secondary"
-                                style="width: 100%; margin-top: 10px"
-                            >
-                                Cancel
-                            </button>
+
+                            <div class="account-stats">
+                                <div class="stat-item">
+                                    <span class="stat-label">Authentication</span>
+                                    <span class="stat-value">Seed Phrase</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Security</span>
+                                    <span class="stat-value">Un-revokable</span>
+                                </div>
+                            </div>
+
+                            <div class="account-actions">
+                                <button id="account-view-seed-btn" class="auth-btn auth-btn-secondary">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                        <circle cx="12" cy="12" r="3"></circle>
+                                    </svg>
+                                    View Seed Phrase
+                                </button>
+                                <button id="account-settings-btn" class="auth-btn auth-btn-outline">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <circle cx="12" cy="12" r="3"></circle>
+                                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1 1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                                    </svg>
+                                    Account Settings
+                                </button>
+                            </div>
+
+                            <div class="account-danger-zone">
+                                <button id="account-signout-btn" class="auth-btn auth-btn-outline">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                                        <polyline points="16,17 21,12 16,7"></polyline>
+                                        <line x1="21" x2="9" y1="12" y2="12"></line>
+                                    </svg>
+                                    Sign Out
+                                </button>
+                                <button id="account-clear-cloud-btn" class="auth-btn auth-btn-danger">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M3 6h18"></path>
+                                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                                        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                                    </svg>
+                                    Clear Cloud Data
+                                </button>
+                            </div>
+
+                            <div class="account-meta">
+                                <p><b>Seed-based authentication:</b> Your account is secured by a 12-word seed phrase that you control completely.</p>
+                                <p><b>Un-revokable:</b> Once your seed is set, it cannot be changed or recovered. Keep it safe.</p>
+                                <p><b>Self-managed:</b> You have full control over your account and data.</p>
+                            </div>
                         </div>
-                        <p id="firebase-status" style="text-align: center; padding-top: 15px; color: #8b8b93">
-                            Sync your library across devices
-                        </p>
-                        <script>
-                            if (window.authManager && window.authManager.user) {
-                                const statusText = document.getElementById('firebase-status');
-                                if (statusText)
-                                    statusText.textContent = `Signed in as ${window.authManager.user.email}`;
-                            }
-                        </script>
-                        <p style="padding-top: 50px; text-align: center; color: #8b8b93">
-                            We only store music data and a randomized ID to find out which Google/Email account is
-                            which.
-                            <br />
-                            All data is anonymous. We do not store anything like emails, usernames, or anything
-                            sensitive. <br />
-                        </p>
-                        <p style="padding-top: 50px; text-align: center; color: #8b8b93">
-                            However, if you want complete control over your data, we allow you to use your own Database
-                            Configuration.
-                        </p>
-                        <div
-                            style="
-                                display: flex;
-                                gap: 50px;
-                                align-items: center;
-                                justify-content: center;
-                                padding-top: 25px;
-                            "
-                        >
-                            <a id="advanced-config-link" class="btn-secondary" href="/settings"
-                                >Advanced: Custom Configuration</a
-                            >
+
+                        <div class="account-info">
+                            <div class="info-card">
+                                <div class="info-icon">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                        <circle cx="12" cy="16" r="1"></circle>
+                                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                                    </svg>
+                                </div>
+                                <div class="info-content">
+                                    <h3>Privacy First</h3>
+                                    <p>We only store your music data and a randomized ID. No personal information like emails or usernames is kept.</p>
+                                </div>
+                            </div>
+
+                            <div class="info-card">
+                                <div class="info-icon">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
+                                    </svg>
+                                </div>
+                                <div class="info-content">
+                                    <h3>Complete Control</h3>
+                                    <p>Want full control? Use your own database configuration for ultimate privacy and ownership.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="account-footer">
+                            <a id="advanced-config-link" href="/settings" class="advanced-link">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1 1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                                </svg>
+                                Advanced Configuration
+                            </a>
                         </div>
                     </div>
                 </div>
+
+                <!-- Friends Page -->
+                <div id="page-friends" class="page">
+                    <div class="friends-hero">
+                        <div class="friends-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="9" cy="7" r="4"></circle>
+                                <path d="M22 2l-4 4m0-4l4 4"></path>
+                            </svg>
+                        </div>
+                        <h1 class="friends-title">Friends & Social</h1>
+                        <p class="friends-subtitle">Connect with friends, share music, and discover new tracks together</p>
+                    </div>
+
+                    <div class="friends-content">
+                        <!-- Friend Code Section -->
+                        <div class="friend-code-section">
+                            <h2>Your Friend Code</h2>
+                            <div class="friend-code-display">
+                                <span id="friend-code-display" class="friend-code">Loading...</span>
+                                <button id="regenerate-code-btn" class="btn-outline">Regenerate</button>
+                            </div>
+                            <p class="friend-code-help">Share this code with friends to connect. Friend codes are 6 characters long and can be changed anytime.</p>
+                        </div>
+
+                        <!-- Add Friend Section -->
+                        <div class="add-friend-section">
+                            <h2>Add Friend</h2>
+                            <div class="add-friend-form">
+                                <input type="text" id="friend-code-input" placeholder="Enter friend's code (e.g. ABC123)" maxlength="6" class="form-input">
+                                <button id="add-friend-btn" class="btn-primary">Add Friend</button>
+                            </div>
+                        </div>
+
+                        <!-- Friends Activity (Live) -->
+                        <div class="friends-activity-section">
+                            <h2>Friends Activity</h2>
+                            <div id="friends-activity" class="activity-list">
+                                <!-- Activity items will be populated here -->
+                            </div>
+                        </div>
+
+                        <!-- Friends List -->
+                        <div class="friends-list-section">
+                            <h2>Your Friends</h2>
+                            <div id="friends-list" class="friends-list">
+                                <!-- Friends will be populated here -->
+                            </div>
+                        </div>
+
+                        <!-- Pending Requests -->
+                        <div class="pending-requests-section">
+                            <h2>Friend Requests</h2>
+                            <div id="pending-requests" class="pending-list">
+                                <!-- Pending requests will be populated here -->
+                            </div>
+                        </div>
+
+                        <!-- Track Suggestions -->
+                        <div class="suggestions-section">
+                            <h2>Track Suggestions</h2>
+                            <div id="track-suggestions" class="suggestions-list">
+                                <!-- Suggestions will be populated here -->
+                            </div>
+                        </div>
+
+                        <!-- Activity Feed -->
+                        <div class="activity-feed-section">
+                            <h2>Recent Activity</h2>
+                            <div id="activity-feed" class="activity-list">
+                                <!-- Activity feed will be populated here -->
+                            </div>
+                        </div>
+
+                        <!-- Shared Playlists -->
+                        <div class="shared-playlists-section">
+                            <h2>Shared Playlists</h2>
+                            <div id="shared-playlists" class="playlists-list">
+                                <!-- Shared playlists will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div id="page-download" class="page">
                     <h2 class="section-title" style="text-align: center">Monochrome Official App</h2>
                     <div class="download-content">

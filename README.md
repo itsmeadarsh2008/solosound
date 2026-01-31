@@ -58,6 +58,40 @@ bun build
 
 - `index.html` — single-page entry and global assets
 - `styles.css` & `animation.css` — global styles
+
+---
+
+## 🔐 Authentication & Turso (Self-hosted)
+
+This project includes a Turso-backed authentication system (JWT) and sync for user data. Quick setup:
+
+1. Create a Turso instance and run the SQL migration located at `functions/turso-migrate.sql`.
+
+2. Set required environment variables in your deployment or local environment (.env):
+
+- `TURSO_URL` — your libsql:// URL
+- `TURSO_TOKEN` — your Turso auth token
+- `JWT_SECRET` — strong secret for signing tokens
+- `ADMIN_TOKEN` — token used to run migrations remotely (keep secret)
+
+3. To run the migration remotely (once):
+
+```bash
+curl -X POST "https://your-app.example.com/api/auth/migrate" -H "x-admin-token: $ADMIN_TOKEN"
+```
+
+4. Endpoints:
+
+- POST `/api/auth/sign-up/email` { email, password } — creates a new user and returns { user, token }
+- POST `/api/auth/sign-in/email` { email, password } — signs in and returns { user, token }
+- POST `/api/auth/forgot-password` { email } — requests a password reset token (in dev the token is returned in the response for convenience)
+- POST `/api/auth/reset-password` { token, newPassword } — apply the password reset token
+- GET `/api/auth/session` — provide `Authorization: Bearer <token>` to validate a token
+
+5. After signing in in the app, your library, playlists, and history will be synced to Turso (if configured) via the sync manager.
+
+If you want, I can add automated deploy scripts or an admin UI to run migrations securely.
+
 - `am-lyrics.css` — enhanced lyrics styling for `am-lyrics` component
 - `js/` — application logic (player, UI, lyrics, settings)
 - `functions/` — serverless endpoints used by the app

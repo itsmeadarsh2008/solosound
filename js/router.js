@@ -63,6 +63,9 @@ export function createRouter(ui) {
             case 'home':
                 await ui.renderHomePage();
                 break;
+            case 'friends':
+                ui.showPage('friends');
+                break;
             default:
                 ui.showPage(page);
                 break;

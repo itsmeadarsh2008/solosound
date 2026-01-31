@@ -3971,6 +3971,483 @@ img[src=''] {
     padding: 1rem 0;
 }
 
+/* Account Page Styles */
+.account-hero {
+    text-align: center;
+    padding: 3rem 2rem 2rem;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+    border-radius: var(--radius);
+    margin: 0 2rem 2rem;
+    color: white;
+}
+
+.account-icon {
+    margin-bottom: 1rem;
+    opacity: 0.9;
+}
+
+.account-title {
+    font-size: clamp(2rem, 4vw, 2.5rem);
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: white;
+}
+
+.account-subtitle {
+    font-size: 1.1rem;
+    opacity: 0.9;
+    max-width: 500px;
+    margin: 0 auto;
+    font-family: 'Roboto', Arial, sans-serif;
+}
+
+.auth-card {
+    max-width: 480px;
+    margin: 0 auto 3rem;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 2rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.auth-header h2 {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+    color: var(--foreground);
+}
+
+.auth-header p {
+    color: var(--muted-foreground);
+    margin-bottom: 2rem;
+}
+
+.auth-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.auth-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--radius);
+    font-weight: 500;
+    transition: all 0.2s ease;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+}
+
+.auth-btn-primary {
+    background: var(--primary);
+    color: white;
+}
+
+.auth-btn-primary:hover {
+    background: var(--primary-hover);
+    transform: translateY(-1px);
+}
+
+.auth-btn-danger {
+    background: var(--destructive);
+    color: white;
+}
+
+.auth-btn-danger:hover {
+    background: var(--destructive-hover);
+    transform: translateY(-1px);
+}
+
+.auth-btn-outline {
+    background: transparent;
+    color: var(--foreground);
+    border: 1px solid var(--border);
+}
+
+.auth-btn-outline:hover {
+    background: var(--muted);
+}
+
+.email-auth-form {
+    border-top: 1px solid var(--border);
+    padding-top: 2rem;
+}
+
+.form-header h3 {
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+    color: var(--foreground);
+}
+
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.form-group label {
+    font-weight: 500;
+    color: var(--foreground);
+    font-size: 0.9rem;
+}
+
+.form-input {
+    padding: 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--background);
+    color: var(--foreground);
+    font-size: 1rem;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.1);
+}
+
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 0.5rem;
+}
+
+.form-actions .auth-btn {
+    flex: 1;
+}
+
+.forgot-link,
+.cancel-link {
+    background: none;
+    border: none;
+    color: var(--primary);
+    cursor: pointer;
+    font-size: 0.9rem;
+    padding: 0.5rem 0;
+    text-align: center;
+}
+
+.forgot-link:hover,
+.cancel-link:hover {
+    text-decoration: underline;
+}
+
+.auth-status {
+    text-align: center;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+}
+
+.auth-status p {
+    color: var(--muted-foreground);
+    font-size: 0.9rem;
+}
+
+.auth-alternatives {
+    margin-top: 2rem;
+}
+
+.auth-divider {
+    position: relative;
+    text-align: center;
+    margin: 1.5rem 0;
+}
+
+.auth-divider::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: var(--border);
+}
+
+.auth-divider span {
+    background: var(--background);
+    padding: 0 1rem;
+    color: var(--muted-foreground);
+    font-size: 0.9rem;
+    position: relative;
+    z-index: 1;
+}
+
+.account-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    margin-bottom: 3rem;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.info-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    transition: transform 0.2s ease;
+}
+
+.info-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.info-icon {
+    flex-shrink: 0;
+    color: var(--primary);
+    margin-top: 0.25rem;
+}
+
+.info-content h3 {
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+    color: var(--foreground);
+}
+
+.info-content p {
+    color: var(--muted-foreground);
+    line-height: 1.5;
+}
+
+.account-footer {
+    text-align: center;
+}
+
+.advanced-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: 500;
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--radius);
+    transition: all 0.2s ease;
+}
+
+.advanced-link:hover {
+    background: var(--muted);
+    text-decoration: none;
+}
+
+/* Account Panel Styles */
+.account-panel {
+    max-width: 480px;
+    margin: 0 auto 3rem;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 2rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.account-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.account-user-icon {
+    flex-shrink: 0;
+    width: 48px;
+    height: 48px;
+    background: var(--primary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.account-user-info h2 {
+    font-size: 1.25rem;
+    margin-bottom: 0.25rem;
+    color: var(--foreground);
+    font-weight: 600;
+}
+
+.account-user-id {
+    color: var(--muted-foreground);
+    font-size: 0.9rem;
+    font-family: 'Roboto', monospace;
+}
+
+.account-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    padding: 1rem;
+    background: var(--muted);
+    border-radius: var(--radius);
+}
+
+.stat-item {
+    text-align: center;
+}
+
+.stat-label {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--muted-foreground);
+    margin-bottom: 0.25rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.stat-value {
+    display: block;
+    font-size: 1rem;
+    color: var(--foreground);
+    font-weight: 600;
+}
+
+.account-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+}
+
+.account-danger-zone {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+}
+
+.account-meta {
+    text-align: center;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+}
+
+.account-meta p {
+    color: var(--muted-foreground);
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin-bottom: 0.5rem;
+}
+
+.account-meta p:last-child {
+    margin-bottom: 0;
+}
+
+.account-meta b {
+    color: var(--foreground);
+    font-weight: 600;
+}
+
+/* Sign-in Banner */
+.signin-banner {
+    margin: 0 2rem 2rem;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+    border-radius: var(--radius);
+    overflow: hidden;
+}
+
+.banner-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.5rem 2rem;
+    color: white;
+}
+
+.banner-icon {
+    flex-shrink: 0;
+    opacity: 0.9;
+}
+
+.banner-text {
+    flex: 1;
+}
+
+.banner-text h3 {
+    font-size: 1.25rem;
+    margin-bottom: 0.25rem;
+    font-weight: 600;
+    color: white;
+}
+
+.banner-text p {
+    margin: 0;
+    opacity: 0.9;
+    font-size: 0.9rem;
+    font-family: 'Roboto', Arial, sans-serif;
+}
+
+.banner-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius);
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.banner-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    text-decoration: none;
+    transform: translateY(-1px);
+}
+
+/* Mobile responsiveness for banner */
+@media (max-width: 768px) {
+    .signin-banner {
+        margin: 0 1rem 1rem;
+    }
+
+    .banner-content {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+        padding: 1rem 1.5rem;
+    }
+
+    .banner-text h3 {
+        font-size: 1.1rem;
+    }
+
+    .banner-text p {
+        font-size: 0.85rem;
+    }
+
+    .banner-btn {
+        align-self: stretch;
+        justify-content: center;
+        padding: 0.75rem 1rem;
+    }
+}
+
 .fullscreen-main-view {
     flex: 1;
     display: flex;
@@ -5482,5 +5959,542 @@ body:has(#side-panel.active) #close-fullscreen-cover-btn {
     .player-controls .buttons button svg {
         width: 25px;
         height: 25px;
+    }
+}
+
+/* Seed phrase display */
+.seed-words {
+    background: var(--card-background, #1a1a1a);
+    border: 1px solid var(--border, #333);
+    border-radius: 8px;
+    padding: 1rem;
+    font-family: 'Courier New', monospace;
+    font-size: 1.1rem;
+    line-height: 1.6;
+    word-break: break-word;
+    text-align: center;
+    margin: 1rem 0;
+    color: var(--primary, #fff);
+}
+
+.seed-display {
+    text-align: center;
+}
+
+.seed-display .form-header {
+    margin-bottom: 1rem;
+}
+
+.seed-display .form-header h3 {
+    color: var(--primary, #fff);
+    margin-bottom: 0.5rem;
+}
+
+.seed-display .form-header p {
+    color: var(--muted-foreground, #aaa);
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+/* === FRIENDS PAGE STYLES === */
+
+#page-friends {
+    background: transparent;
+}
+
+.friends-hero {
+    padding: 3rem 0 2rem 2rem;
+    text-align: left;
+    display: block;
+}
+
+.friends-icon {
+    color: var(--primary, #fff);
+    margin-bottom: 1rem;
+    display: block;
+}
+
+.friends-title {
+    font-family: 'Righteous', cursive !important;
+    font-size: clamp(2.5rem, 6vw, 3.5rem);
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 0.5rem;
+    color: var(--primary, #fff);
+    text-align: left;
+    letter-spacing: -1px;
+}
+
+.friends-subtitle {
+    font-family: 'Roboto', Arial, sans-serif !important;
+    font-size: clamp(1rem, 2.5vw, 1.35rem);
+    font-weight: 400;
+    color: var(--muted-foreground, #aaa);
+    margin-bottom: 0.5rem;
+    text-align: left;
+    max-width: 600px;
+}
+
+.friends-content {
+    padding: 0 2rem 2rem 2rem;
+    max-width: 1200px;
+}
+
+.friends-content h2 {
+    font-size: 1.5rem;
+    margin: 2rem 0 1rem 0;
+    color: var(--primary, #fff);
+    border-bottom: 1px solid var(--border, #333);
+    padding-bottom: 0.5rem;
+}
+
+.friend-code-section,
+.add-friend-section,
+.friends-activity-section,
+.friends-list-section,
+.pending-requests-section,
+.suggestions-section,
+.activity-feed-section,
+.shared-playlists-section {
+    margin-bottom: 2rem;
+}
+
+.friend-code-display {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.friend-code {
+    font-family: 'Righteous', monospace;
+    font-size: 1.5rem;
+    background: var(--card-background, #1a1a1a);
+    border: 1px solid var(--border, #333);
+    padding: 0.5rem 1rem;
+    border-radius: var(--border-radius, 8px);
+    color: var(--primary, #fff);
+    min-width: 120px;
+    text-align: center;
+}
+
+.friend-code-help {
+    color: var(--muted-foreground, #aaa);
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+}
+
+.add-friend-form {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    max-width: 400px;
+}
+
+.add-friend-form .form-input {
+    flex: 1;
+    padding: 0.75rem;
+    background: var(--card-background, #1a1a1a);
+    border: 1px solid var(--border, #333);
+    border-radius: var(--border-radius, 8px);
+    color: var(--text, #fff);
+    font-size: 1rem;
+}
+
+.add-friend-form .form-input:focus {
+    outline: none;
+    border-color: var(--primary, #007bff);
+}
+
+.add-friend-form .btn-primary {
+    padding: 0.75rem 1.5rem;
+    background: var(--primary, #007bff);
+    color: white;
+    border: none;
+    border-radius: var(--border-radius, 8px);
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.2s;
+}
+
+.add-friend-form .btn-primary:hover {
+    background: var(--primary-hover, #0056b3);
+}
+
+.btn-outline {
+    padding: 0.5rem 1rem;
+    background: transparent;
+    color: var(--primary, #007bff);
+    border: 1px solid var(--primary, #007bff);
+    border-radius: var(--border-radius, 8px);
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.btn-outline:hover {
+    background: var(--primary, #007bff);
+    color: white;
+}
+
+.friends-list,
+.pending-list,
+.suggestions-list,
+.activity-list,
+.playlists-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.friend-item,
+.pending-request,
+.suggestion-item,
+.activity-item {
+    background: var(--card-background, #1a1a1a);
+    border: 1px solid var(--border, #333);
+    border-radius: var(--border-radius, 8px);
+    padding: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.friend-info,
+.suggestion-info {
+    flex: 1;
+}
+
+.friend-code,
+.from-friend,
+.activity-friend {
+    font-weight: 600;
+    color: var(--primary, #fff);
+}
+
+.friend-status,
+.track-title,
+.activity-type,
+.activity-data {
+    color: var(--text, #fff);
+    margin-top: 0.25rem;
+}
+
+.suggestion-message {
+    color: var(--muted-foreground, #aaa);
+    font-style: italic;
+    margin-top: 0.25rem;
+}
+
+.friend-actions,
+.suggestion-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.friend-actions button,
+.suggestion-actions button {
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--border, #333);
+    background: transparent;
+    color: var(--text, #fff);
+    border-radius: var(--border-radius, 8px);
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+}
+
+.friend-actions button:hover,
+.suggestion-actions button:hover {
+    background: var(--hover-background, #333);
+    border-color: var(--primary, #007bff);
+}
+
+.suggestion-status {
+    color: var(--muted-foreground, #aaa);
+    font-style: italic;
+}
+
+.activity-item {
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.activity-time {
+    color: var(--muted-foreground, #aaa);
+    font-size: 0.8rem;
+    margin-top: 0.5rem;
+}
+
+.friend-activity-item {
+    background: var(--card-background, #1a1a1a);
+    border: 1px solid var(--border, #333);
+    border-radius: var(--border-radius, 8px);
+    padding: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.friend-activity-item .activity-info {
+    flex: 1;
+}
+
+.friend-activity-item .activity-status {
+    color: var(--muted-foreground, #aaa);
+    margin-right: 0.5rem;
+}
+
+.friend-activity-item .progress {
+    color: var(--primary, #fff);
+    font-weight: 600;
+}
+
+.friend-activity-item button {
+    padding: 0.5rem 1rem;
+    background: var(--primary, #007bff);
+    color: white;
+    border: none;
+    border-radius: var(--border-radius, 8px);
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background-color 0.2s;
+}
+
+.friend-activity-item button:hover {
+    background: var(--primary-hover, #0056b3);
+}
+
+/* Notification styles */
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 1rem 1.5rem;
+    border-radius: var(--border-radius, 8px);
+    color: white;
+    font-weight: 500;
+    z-index: 10000;
+    animation: slideIn 0.3s ease-out;
+}
+
+.notification.success {
+    background: #28a745;
+}
+
+.notification.error {
+    background: #dc3545;
+}
+
+.notification.info {
+    background: var(--primary, #007bff);
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Empty state styles */
+.empty-state {
+    text-align: center;
+    color: var(--muted-foreground, #aaa);
+    font-style: italic;
+    padding: 2rem 1rem;
+    background: var(--card-background, #1a1a1a);
+    border-radius: var(--border-radius, 8px);
+    border: 1px solid var(--border, #333);
+    margin: 1rem 0;
+}
+
+/* Modern Homepage Styles */
+.quick-actions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.quick-action-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1.5rem 1rem;
+    background: var(--card-background, #1a1a1a);
+    border-radius: var(--border-radius, 8px);
+    border: 1px solid var(--border, #333);
+    text-decoration: none;
+    color: var(--text, #fff);
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.quick-action-card:hover {
+    background: var(--card-background-hover, #2a2a2a);
+    border-color: var(--primary, #fff);
+    transform: translateY(-2px);
+}
+
+.quick-action-icon {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--primary, #fff);
+    color: var(--background, #000);
+    border-radius: 50%;
+    margin-bottom: 0.75rem;
+}
+
+.quick-action-label {
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-align: center;
+}
+
+.section-header-modern {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+}
+
+.section-title-group h2 {
+    margin: 0 0 0.25rem 0;
+    font-size: 1.75rem;
+    font-weight: 700;
+}
+
+.section-subtitle {
+    margin: 0;
+    color: var(--muted-foreground, #aaa);
+    font-size: 0.9rem;
+    font-weight: 400;
+}
+
+.btn-secondary-modern {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: transparent;
+    border: 1px solid var(--border, #333);
+    color: var(--text, #fff);
+    border-radius: var(--border-radius, 8px);
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.btn-secondary-modern:hover {
+    background: var(--card-background-hover, #2a2a2a);
+    border-color: var(--primary, #fff);
+}
+
+.activity-list-modern {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.friend-activity-item.compact {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem;
+    background: var(--card-background, #1a1a1a);
+    border-radius: var(--border-radius, 8px);
+    border: 1px solid var(--border, #333);
+}
+
+.friend-activity-item.compact .activity-info {
+    flex: 1;
+    font-size: 0.9rem;
+}
+
+.friend-activity-item.compact .activity-info .friend-code {
+    font-weight: 600;
+    color: var(--primary, #fff);
+    margin-right: 0.5rem;
+}
+
+.friend-activity-item.compact .activity-info .activity-status {
+    color: var(--muted-foreground, #aaa);
+}
+
+.friend-activity-item.compact .activity-info .track-title {
+    color: var(--text, #fff);
+    margin-left: 0.25rem;
+}
+
+.friend-activity-item.compact button {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+}
+
+.track-list-modern {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.card-grid-modern {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 1.5rem;
+}
+
+.discover-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+}
+
+.discover-section h3 {
+    margin: 0 0 1rem 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text, #fff);
+}
+
+.card-grid-compact {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 1rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .quick-actions-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .section-header-modern {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .discover-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+
+    .friend-activity-item.compact {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .friend-activity-item.compact button {
+        align-self: flex-end;
     }
 }

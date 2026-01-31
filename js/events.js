@@ -14,7 +14,7 @@ import { showNotification, downloadTrackWithMetadata, downloadAlbumAsZip, downlo
 import { downloadQualitySettings } from './storage.js';
 import { updateTabTitle, navigate } from './router.js';
 import { db } from './db.js';
-import { syncManager } from './accounts/pocketbase.js';
+import { syncManager } from './accounts/sync.js';
 import { waveformGenerator } from './waveform.js';
 
 let currentTrackIdForWaveform = null;
@@ -719,7 +719,19 @@ export async function handleTrackAction(
         await downloadTrackWithMetadata(item, downloadQualitySettings.getQuality(), api, lyricsManager);
     } else if (action === 'toggle-like') {
         const added = await db.toggleFavorite(type, item);
-        syncManager.syncLibraryItem(type, item, added);
+
+        // Sync based on type
+        if (type === 'track') {
+            syncManager.syncFavoriteTrack(item, added);
+        } else if (type === 'album') {
+            syncManager.syncFavoriteAlbum(item, added);
+        } else if (type === 'artist') {
+            syncManager.syncFavoriteArtist(item, added);
+        } else if (type === 'playlist') {
+            syncManager.syncFavoritePlaylist(item, added);
+        } else if (type === 'mix') {
+            syncManager.syncFavoriteMix(item, added);
+        }
 
         if (added && type === 'track' && scrobbler && lastFMStorage.isEnabled() && lastFMStorage.shouldLoveOnLike()) {
             scrobbler.loveTrack(item);
@@ -1042,7 +1054,7 @@ export function initializeTrackInteractions(player, api, mainContent, contextMen
             return;
         }
         if (trackItem && !trackItem.dataset.queueIndex && !e.target.closest('.remove-from-playlist-btn')) {
-            const parentList = trackItem.closest('.track-list');
+            const parentList = trackItem.closest('.track-list, .track-list-modern');
             const allTrackElements = Array.from(parentList.querySelectorAll('.track-item'));
             const trackList = allTrackElements.map((el) => trackDataStore.get(el)).filter(Boolean);
 

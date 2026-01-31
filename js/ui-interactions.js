@@ -53,7 +53,7 @@ export function initializeUIInteractions(player, api, ui) {
 
                 if (playlistId && folderId) {
                     const { db } = await import('./db.js');
-                    const { syncManager } = await import('./accounts/pocketbase.js');
+                    const { syncManager } = await import('./accounts/sync.js');
                     const { showNotification } = await import('./downloads.js');
                     const updatedFolder = await db.addPlaylistToFolder(folderId, playlistId);
                     syncManager.syncUserFolder(updatedFolder, 'update');
@@ -134,14 +134,14 @@ export function initializeUIInteractions(player, api, ui) {
         if (likeBtn) {
             likeBtn.addEventListener('click', async () => {
                 const { db } = await import('./db.js'); // Already imported
-                const { syncManager } = await import('./accounts/pocketbase.js');
+                const { syncManager } = await import('./accounts/sync.js');
                 const { showNotification } = await import('./downloads.js');
 
                 let addedCount = 0;
                 for (const track of currentQueue) {
                     const wasAdded = await db.toggleFavorite('track', track);
                     if (wasAdded) {
-                        syncManager.syncLibraryItem('track', track, true);
+                        syncManager.syncFavoriteTrack(track, true);
                         addedCount++;
                     }
                 }
@@ -160,7 +160,7 @@ export function initializeUIInteractions(player, api, ui) {
         if (addToPlaylistBtn) {
             addToPlaylistBtn.addEventListener('click', async () => {
                 const { db } = await import('./db.js'); // Already imported
-                const { syncManager } = await import('./accounts/pocketbase.js');
+                const { syncManager } = await import('./accounts/sync.js');
                 const { showNotification } = await import('./downloads.js');
 
                 const playlists = await db.getPlaylists();
@@ -312,11 +312,11 @@ export function initializeUIInteractions(player, api, ui) {
                     const track = player.getCurrentQueue()[index];
                     if (track) {
                         const { db } = await import('./db.js'); // Already imported
-                        const { syncManager } = await import('./accounts/pocketbase.js');
+                        const { syncManager } = await import('./accounts/sync.js');
                         const { showNotification } = await import('./downloads.js');
 
                         const added = await db.toggleFavorite('track', track);
-                        syncManager.syncLibraryItem('track', track, added);
+                        syncManager.syncFavoriteTrack(track, added);
 
                         // Update button state
                         likeBtn.classList.toggle('active', added);
@@ -439,7 +439,7 @@ export function initializeUIInteractions(player, api, ui) {
             const folderId = window.location.pathname.split('/')[2];
             if (playlistId && folderId) {
                 const { db } = await import('./db.js');
-                const { syncManager } = await import('./accounts/pocketbase.js');
+                const { syncManager } = await import('./accounts/sync.js');
                 const { showNotification } = await import('./downloads.js');
                 try {
                     const updatedFolder = await db.addPlaylistToFolder(folderId, playlistId);

@@ -451,10 +451,10 @@ export const backgroundSettings = {
 
     isEnabled() {
         try {
-            // Default to false if not set (improves initial readability and avoids large downloads)
-            return localStorage.getItem(this.STORAGE_KEY) === 'true';
+            // Default to true for album cover background
+            return localStorage.getItem(this.STORAGE_KEY) !== 'false';
         } catch {
-            return false;
+            return true;
         }
     },
 
@@ -465,10 +465,10 @@ export const backgroundSettings = {
     // Animation control for the blurred background layer
     isAnimated() {
         try {
-            // Default to true if not set
-            return localStorage.getItem(this.ANIMATED_KEY) !== 'false';
+            // Default to false if not set
+            return localStorage.getItem(this.ANIMATED_KEY) === 'true';
         } catch {
-            return true;
+            return false;
         }
     },
 
@@ -666,9 +666,9 @@ export const visualizerSettings = {
     isEnabled() {
         try {
             const val = localStorage.getItem(this.ENABLED_KEY);
-            return val === null ? true : val === 'true';
+            return val === null ? false : val === 'true';
         } catch {
-            return true;
+            return false;
         }
     },
 
